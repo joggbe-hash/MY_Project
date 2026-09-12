@@ -1,0 +1,73 @@
+name: me-too-app
+
+services:
+  # 1. PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: me_too_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: me_too_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d me_too_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Go Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: me_too_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: me_too_db
+      DB_SSLMODE: disable
+      PORT: 8080
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+
+  # 3. Vue 3 Frontend App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: me_too_frontend
+    restart: always
+    depends_on:
+      - backend
+    expose:
+      - "80"
+
+  # 4. Dedicated Nginx Reverse Proxy Gateway
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: me_too_nginx
+    restart: always
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+      - "3000:80"
+
+volumes:
+  postgres_data:
