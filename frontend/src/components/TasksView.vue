@@ -41,9 +41,9 @@
           </div>
 
           <div class="task-actions-row">
-            <button class="btn-outline pill-action-btn" @click="openProgressModal(task)">
+            <div class="status-pill-tag executing-tag">
               執行任務
-            </button>
+            </div>
           </div>
         </div>
 
@@ -72,9 +72,9 @@
           </div>
 
           <div class="task-actions-row">
-            <button class="btn-outline pill-action-btn" @click="openProgressModal(task)">
+            <div class="status-pill-tag executing-tag">
               執行任務
-            </button>
+            </div>
           </div>
         </div>
 
@@ -390,11 +390,19 @@ function addPhotoStep() {
   font-size: 11px;
 }
 
-.pill-action-btn {
+.status-pill-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 6px 14px;
-  border-radius: var(--radius-pill);
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 18px;
+  color: #141417;
   font-size: 13px;
   font-weight: 500;
+  cursor: default;
+  user-select: none;
 }
 
 /* Figma Screen 10 Execution Modal Styles */

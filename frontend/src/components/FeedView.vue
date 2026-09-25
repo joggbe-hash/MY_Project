@@ -75,20 +75,18 @@
             >
               我也要
             </button>
-            <button 
+            <div 
               v-else-if="post.is_joined && !post.is_completed" 
-              class="btn-outline finish-btn" 
-              @click="openSubmitResult(post)"
+              class="status-pill-tag executing-tag"
             >
               執行任務
-            </button>
-            <button 
+            </div>
+            <div 
               v-else-if="post.is_completed" 
-              class="btn-outline completed-btn" 
-              @click="openSubmitResult(post)"
+              class="status-pill-tag completed-tag"
             >
               ✓任務完成
-            </button>
+            </div>
           </div>
 
           <!-- Stats Row (Figma: 成果 3, 720) -->
@@ -398,6 +396,21 @@ function submitReply(postId) {
 .finish-btn {
   padding: 6px 16px;
   font-size: 12px;
+}
+
+.status-pill-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 18px;
+  color: #141417;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: default;
+  user-select: none;
 }
 
 .card-stats-col {
