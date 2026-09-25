@@ -42,11 +42,14 @@
           v-for="(task, idx) in tasks" 
           :key="task.id" 
           class="daily-task-row"
+          :class="{ 'completed-row': task.is_completed }"
+          @click="$emit('toggle-task', task.id)"
         >
-          <div class="daily-task-title">
-            {{ idx + 1 }}. {{ cleanTitle(task.title) }}
+          <div class="daily-task-title" :class="{ 'completed-title': task.is_completed }">
+            <template v-if="!task.is_completed">{{ idx + 1 }}. {{ cleanTitle(task.title) }}</template>
+            <template v-else>{{ cleanTitle(task.title) }}</template>
           </div>
-          <button class="task-delete-icon" title="刪除任務" @click="$emit('delete-task', task.id)">
+          <button class="task-delete-icon" title="刪除任務" @click.stop="$emit('delete-task', task.id)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -168,6 +171,11 @@ function cleanTitle(title) {
   font-size: 14px;
   color: var(--text-main);
   line-height: 1.3;
+}
+
+.completed-title {
+  color: #B8B8B8;
+  text-decoration: line-through;
 }
 
 .task-delete-icon {

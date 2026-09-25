@@ -18,6 +18,7 @@
           v-if="currentTab === 'onboarding'"
           :tasks="dailyTasks"
           @add-task="handleAddDailyTask"
+          @toggle-task="handleToggleDailyTask"
           @delete-task="handleDeleteDailyTask"
           @finish-setup="finishDailyTaskSetup"
         />

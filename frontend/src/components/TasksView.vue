@@ -41,11 +41,8 @@
           </div>
 
           <div class="task-actions-row">
-            <button class="btn-outline btn-sm" @click="openProgressModal(task)">
-              進度紀錄
-            </button>
-            <button class="btn-dark btn-sm" @click="handleComplete(task.id)">
-              完成任務
+            <button class="btn-outline pill-action-btn" @click="openProgressModal(task)">
+              執行任務
             </button>
           </div>
         </div>
@@ -75,8 +72,8 @@
           </div>
 
           <div class="task-actions-row">
-            <button class="btn-dark btn-sm" @click="handleComplete(task.id)">
-              完成任務
+            <button class="btn-outline pill-action-btn" @click="openProgressModal(task)">
+              執行任務
             </button>
           </div>
         </div>
@@ -112,20 +109,53 @@
       </div>
     </div>
 
-    <!-- Progress Note Modal -->
+    <!-- Task Execution Modal (Matching Figma Screen 10) -->
     <div v-if="showProgressModal" class="modal-backdrop" @click.self="showProgressModal = false">
-      <div class="modal-card">
-        <h3 class="card-title">更新任務進度紀錄</h3>
-        <p class="card-desc">{{ activeTask?.title }}</p>
-        <input 
-          v-model="progressInput" 
-          class="input-control" 
-          placeholder="例如：已完成第 1~3 章節草稿..." 
-          @keyup.enter="saveProgressNote"
-        />
-        <div class="modal-footer">
-          <button class="btn-outline" @click="showProgressModal = false">取消</button>
-          <button class="btn-dark" @click="saveProgressNote">儲存進度</button>
+      <div class="modal-card execution-modal-card">
+        <div class="execution-header">
+          <h3 class="card-title">執行記錄</h3>
+        </div>
+
+        <div class="figma-card task-info-card">
+          <div class="status-pill">進行中</div>
+          <h4 class="execution-task-title">{{ activeTask?.title || '拍一張今天的天空' }}</h4>
+          <p class="execution-task-desc">用照片或文字逐步記錄執行過程，完成後發布成果。</p>
+        </div>
+
+        <div class="execution-section-header">
+          <div class="section-heading">過程記錄</div>
+          <div class="section-subtext">依序加入每個步驟，可使用文字或照片</div>
+        </div>
+
+        <div class="execution-steps-list">
+          <!-- Step 1 -->
+          <div class="step-card">
+            <div class="step-badge">1</div>
+            <div class="step-media-box">
+              <span>{{ progressInput || '一張相片' }}</span>
+            </div>
+            <div class="step-time">記錄時間 今天 14:20</div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-card">
+            <div class="step-badge">2</div>
+            <div class="step-actions-row">
+              <div class="step-add-box" @click="addTextStep">
+                <span class="plus-icon">＋</span>
+                <span>新增文字</span>
+              </div>
+              <div class="step-add-box" @click="addPhotoStep">
+                <span class="plus-icon">＋</span>
+                <span>拍照或從相簿選擇</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="execution-modal-footer">
+          <button class="btn-outline flex-1" @click="saveProgressNote">儲存目前進度</button>
+          <button class="btn-dark flex-1" @click="finishTask">完成任務</button>
         </div>
       </div>
     </div>
@@ -180,8 +210,26 @@ function openProgressModal(task) {
 function saveProgressNote() {
   if (!activeTask.value) return
   emit('update-progress', { id: activeTask.value.id, note: progressInput.value })
-  activeTask.value.progress_note = progressInput.value
+  if (activeTask.value) activeTask.value.progress_note = progressInput.value
   showProgressModal.value = false
+}
+
+function finishTask() {
+  if (activeTask.value) {
+    handleComplete(activeTask.value.id)
+    showProgressModal.value = false
+  }
+}
+
+function addTextStep() {
+  const note = prompt('請輸入新增的步驟文字：', '完成初步紀錄')
+  if (note) {
+    progressInput.value = note
+  }
+}
+
+function addPhotoStep() {
+  progressInput.value = '已選擇相片照片'
 }
 </script>
 
@@ -340,5 +388,148 @@ function saveProgressNote() {
 .btn-xs {
   padding: 4px 10px;
   font-size: 11px;
+}
+
+.pill-action-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Figma Screen 10 Execution Modal Styles */
+.execution-modal-card {
+  max-width: 380px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #1F1F21;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 14px;
+  align-self: flex-start;
+}
+
+.task-info-card {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.execution-task-title {
+  font-size: 17px;
+  font-weight: 500;
+  color: #1A1A1C;
+}
+
+.execution-task-desc {
+  font-size: 12px;
+  color: #616369;
+  line-height: 1.4;
+}
+
+.execution-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-heading {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1A1A1C;
+}
+
+.section-subtext {
+  font-size: 11px;
+  color: #616369;
+}
+
+.execution-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step-card {
+  padding: 14px;
+  background: #FFFFFF;
+  border: 1px solid #D6D9DB;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step-badge {
+  width: 26px;
+  height: 26px;
+  background: #1F1F21;
+  color: #FFFFFF;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.step-media-box {
+  height: 112px;
+  background: #F5F5F7;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #616369;
+  font-size: 12px;
+}
+
+.step-time {
+  font-size: 11px;
+  color: #616369;
+}
+
+.step-actions-row {
+  display: flex;
+  gap: 10px;
+}
+
+.step-add-box {
+  flex: 1;
+  height: 112px;
+  background: #F5F5F7;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #616369;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.plus-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.execution-modal-footer {
+  display: flex;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.flex-1 {
+  flex: 1;
 }
 </style>

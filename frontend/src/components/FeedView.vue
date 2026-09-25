@@ -37,8 +37,11 @@
         :key="post.id" 
         class="figma-card post-card"
       >
-        <!-- Top Joined Badge (Figma Screen 02_展開) -->
-        <div v-if="post.is_joined" class="joined-badge">
+        <!-- Top Joined / Completed Badge (Figma Screen 02_展開 / Screen 03) -->
+        <div v-if="post.is_completed" class="joined-badge completed-badge">
+          任務：已完成
+        </div>
+        <div v-else-if="post.is_joined" class="joined-badge">
           任務：已加入
         </div>
 
@@ -66,18 +69,25 @@
         <div class="card-bottom-row">
           <div class="action-btn-col">
             <button 
-              v-if="!post.is_joined" 
+              v-if="!post.is_joined && !post.is_completed" 
               class="btn-dark join-btn"
               @click="handleJoin(post)"
             >
               我也要
             </button>
             <button 
-              v-else 
+              v-else-if="post.is_joined && !post.is_completed" 
               class="btn-outline finish-btn" 
               @click="openSubmitResult(post)"
             >
-              完成任務
+              執行任務
+            </button>
+            <button 
+              v-else-if="post.is_completed" 
+              class="btn-outline completed-btn" 
+              @click="openSubmitResult(post)"
+            >
+              ✓任務完成
             </button>
           </div>
 
