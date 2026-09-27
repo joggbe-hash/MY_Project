@@ -50,7 +50,7 @@
     <!-- 4. 我的任務 -->
     <div 
       class="nav-item" 
-      :class="{ active: currentTab === 'tasks' }"
+      :class="{ active: currentTab === 'tasks' || currentTab === 'execution' }"
       @click="$emit('change-tab', 'tasks')"
     >
       <div class="nav-icon">

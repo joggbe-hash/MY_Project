@@ -31,6 +31,32 @@
         </div>
       </div>
 
+      <!-- Privacy Visibility Selector (RUICHIEN 設計註釋: 提供公開/私人選項) -->
+      <div class="privacy-type-group">
+        <label class="section-label">隱私範圍</label>
+        <div class="type-pills-row">
+          <button 
+            type="button"
+            class="type-pill" 
+            :class="{ active: visibility === 'public' }"
+            @click="visibility = 'public'"
+          >
+            🌐 公開
+          </button>
+          <button 
+            type="button"
+            class="type-pill" 
+            :class="{ active: visibility === 'private' }"
+            @click="visibility = 'private'"
+          >
+            🔒 私人
+          </button>
+        </div>
+        <p class="privacy-hint">
+          {{ visibility === 'public' ? '所有人皆可在貼文串看見並回應' : '僅自己可見，將直接收錄於私人任務區' }}
+        </p>
+      </div>
+
       <!-- Title Input -->
       <div class="input-group">
         <label class="input-label">貼文標題：</label>
@@ -82,6 +108,7 @@ import { ref } from 'vue'
 const emit = defineEmits(['publish'])
 
 const postType = ref('task')
+const visibility = ref('public')
 const postTitle = ref('')
 const postContent = ref('')
 const hasImage = ref(false)
@@ -94,6 +121,7 @@ function handlePublish() {
   if (!postTitle.value.trim()) return
   emit('publish', {
     post_type: postType.value,
+    visibility: visibility.value,
     title: postTitle.value.trim(),
     content: postContent.value.trim() || (postType.value === 'task' ? '一起來挑戰看看！' : '看到的好點子，分享給大家。'),
     image_url: hasImage.value ? 'uploaded-photo-preview' : ''
@@ -101,6 +129,7 @@ function handlePublish() {
   postTitle.value = ''
   postContent.value = ''
   hasImage.value = false
+  visibility.value = 'public'
 }
 </script>
 
@@ -204,5 +233,18 @@ function handlePublish() {
   font-size: 15px;
   font-weight: 700;
   margin-top: 6px;
+}
+
+.privacy-type-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.privacy-hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: -2px;
+  padding-left: 2px;
 }
 </style>

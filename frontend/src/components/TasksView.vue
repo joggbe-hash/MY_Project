@@ -41,9 +41,9 @@
           </div>
 
           <div class="task-actions-row">
-            <div class="status-pill-tag executing-tag">
+            <button class="status-pill-tag executing-tag clickable-action" @click="handleExecute(task)">
               執行任務
-            </div>
+            </button>
           </div>
         </div>
 
@@ -72,9 +72,9 @@
           </div>
 
           <div class="task-actions-row">
-            <div class="status-pill-tag executing-tag">
+            <button class="status-pill-tag executing-tag clickable-action" @click="handleExecute(task)">
               執行任務
-            </div>
+            </button>
           </div>
         </div>
 
@@ -180,7 +180,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['create-private-task', 'complete-task', 'update-progress'])
+const emit = defineEmits(['create-private-task', 'complete-task', 'update-progress', 'execute-task'])
 
 const showAddPrivate = ref(false)
 const newPrivateTitle = ref('')
@@ -189,6 +189,10 @@ const isCompletedExpanded = ref(false)
 const showProgressModal = ref(false)
 const activeTask = ref(null)
 const progressInput = ref('')
+
+function handleExecute(task) {
+  emit('execute-task', task)
+}
 
 function submitPrivateTask() {
   if (!newPrivateTitle.value.trim()) return
@@ -403,6 +407,16 @@ function addPhotoStep() {
   font-weight: 500;
   cursor: default;
   user-select: none;
+}
+
+.status-pill-tag.clickable-action {
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.status-pill-tag.clickable-action:hover {
+  background: #F4F4F6;
+  border-color: #141417;
 }
 
 /* Figma Screen 10 Execution Modal Styles */

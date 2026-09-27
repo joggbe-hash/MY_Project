@@ -29,7 +29,9 @@
           :posts="posts"
           @join-post="handleJoinPost"
           @submit-post-result="handleSubmitResult"
+          @save-inspiration="handleSaveInspirationPost"
           @change-tab="setTab"
+          @execute-task="handleExecuteTask"
         />
 
         <!-- 04. 我也要發文 (發文頁面) -->
@@ -47,6 +49,17 @@
           @create-private-task="handleCreatePrivateTask"
           @complete-task="handleCompleteTask"
           @update-progress="handleUpdateTaskProgress"
+          @execute-task="handleExecuteTask"
+        />
+
+        <!-- 10. 執行記錄 (Figma Screen 10) -->
+        <TaskExecutionView 
+          v-else-if="currentTab === 'execution'"
+          :task="activeExecutionTask"
+          @back="setTab('tasks')"
+          @navigate="setTab"
+          @save-progress="handleSaveTaskProgress"
+          @finish-task="handleFinishTaskExecution"
         />
 
         <!-- 06. 靈感清單 (蒐集靈感、速記、日期分組) -->
@@ -55,6 +68,8 @@
           :inspirations="filteredInspirations"
           @add-inspiration="handleAddInspiration"
           @delete-inspiration="handleDeleteInspiration"
+          @update-inspiration="handleUpdateInspiration"
+          @push-to-private-task="handlePushInspirationToPrivateTask"
           @search="handleSearchInspirations"
         />
 
@@ -96,6 +111,7 @@ import DailyTaskView from './components/DailyTaskView.vue'
 import FeedView from './components/FeedView.vue'
 import CreatePostView from './components/CreatePostView.vue'
 import TasksView from './components/TasksView.vue'
+import TaskExecutionView from './components/TaskExecutionView.vue'
 import InspirationsView from './components/InspirationsView.vue'
 import ProfileView from './components/ProfileView.vue'
 import * as api from './api/client.js'
@@ -114,7 +130,7 @@ const currentUser = ref({
 
 // Data states
 const dailyTasks = ref([
-  { id: 1, title: '完成專題使用流程圖', is_completed: false },
+  { id: 1, title: '完成專題使用流程圖', is_completed: true },
   { id: 2, title: '拍一張今天的天空', is_completed: false },
   { id: 3, title: '整理書桌 10 分鐘', is_completed: false }
 ])
@@ -129,7 +145,8 @@ const posts = ref([
     expires_info: '任務貼文 · 剩 18 小時',
     result_count: 3,
     likes_count: 720,
-    is_joined: true,
+    is_joined: false,
+    is_completed: false,
     submissions: [
       { id: 1, author_name: 'kb_q_p', time_ago: '4小時', content: '應該長這樣', image_url: 'placeholder-sky-1' },
       { id: 2, author_name: '同學A', time_ago: '2小時', content: '今天的天空是藍灰色，很適合當背景。' },
@@ -143,32 +160,35 @@ const posts = ref([
     title: '把通勤路上的顏色做成色票',
     content: '看到有趣的配色先收藏，之後可以轉成自己的創作。',
     expires_info: '靈感貼文 · 收藏保留 30 天',
+    image_url: 'placeholder-palette',
     likes_count: 86,
     saves_count: 12,
+    comments_count: 4,
     is_joined: false,
     submissions: []
   },
   {
     id: 3,
-    author_name: 'bbb',
+    author_name: 'lavender_nation',
     post_type: 'task',
     title: '拍一張今天的天空',
     content: '用一張照片記錄今天的狀態，完成後分享一句話。',
     expires_info: '任務貼文 · 剩 18 小時',
     result_count: 3,
     likes_count: 720,
-    is_joined: false,
+    is_joined: true,
+    is_completed: false,
     submissions: []
   },
   {
     id: 4,
-    author_name: 'dafuu0000',
-    post_type: 'inspiration',
-    title: '把通勤路上的顏色做成色票',
-    content: '看到有趣的配色先收藏，之後可以轉成自己的創作。',
-    expires_info: '靈感貼文 · 收藏保留 30 天',
-    likes_count: 86,
-    saves_count: 12,
+    author_name: 'aaa',
+    post_type: 'task',
+    title: '整理書桌10分鐘',
+    content: '去整理啦',
+    expires_info: '任務貼文 · 剩 18 小時',
+    result_count: 3,
+    likes_count: 720,
     is_joined: false,
     submissions: []
   }
@@ -179,7 +199,7 @@ const myTasks = ref({
     {
       id: 101,
       title: '完成企劃草稿',
-      description: '私人任務，永久留在自己的清單',
+      description: '私人任務，會保留紀錄',
       is_completed: false,
       progress_note: ''
     }
@@ -194,7 +214,7 @@ const myTasks = ref({
     },
     {
       id: 202,
-      post_id: 3,
+      post_id: 4,
       title: '公共任務：整理書桌 10 分鐘',
       description: '來自任務貼文，完成後需分享成果',
       is_completed: false
@@ -206,14 +226,20 @@ const myTasks = ref({
 const inspirations = ref([
   {
     id: 1,
-    title: '去租書店把柯南漫畫裡的壞人都圈出來',
+    title: '去租書店把柯南漫畫裡的壞人都圈出來。',
     date_group: '2026/06/24',
     is_pinned: false
   },
   {
     id: 2,
-    title: '蛇的尿道跟肛門是同一個，尿液結晶有時會堵塞',
+    title: '蛇的排遺出口只有一個，尿液有可能結晶堵塞。',
     preview_content: '貼文連結 / 照片預覽',
+    date_group: '2026/06/24',
+    is_pinned: false
+  },
+  {
+    id: 3,
+    title: '舉辦社區吃麻糬大賽解決人口老化問題。',
     date_group: '2026/06/24',
     is_pinned: false
   }
@@ -230,10 +256,12 @@ const profileData = ref({
   user: {
     username: 'lavender_nation',
     bio: '把靈感變成行動，把行動留下成果',
-    weekly_info: '★ 週進度：4 個任務，已達成連續 3 天記錄'
+    weekly_info: '本週完成 5 個任務，收藏 8 則靈感'
   },
   stats: {
+    friends: 28,
     outcomes: 12,
+    albums: 4,
     tasks: 28,
     inspirations: 46,
     launches: 4
@@ -339,10 +367,27 @@ async function handleSubmitResult({ postId, content }) {
   }
 }
 
-// 04 發文 Action: 發布貼文
+// 04 發文 Action: 發布貼文 (RUICHIEN 設計註釋: 提供公開/私人選項)
 async function handlePublishPost(payload) {
   const authorName = currentUser.value?.username || profileData.value.user?.username || 'lavender_nation'
   const isTask = payload.post_type === 'task'
+  const isPrivate = payload.visibility === 'private'
+
+  if (isPrivate) {
+    if (isTask) {
+      await handleCreatePrivateTask(payload.title)
+      setTab('tasks')
+    } else {
+      await handleAddInspiration({
+        title: payload.title,
+        preview_content: payload.content,
+        image_url: payload.image_url
+      })
+      setTab('inspirations')
+    }
+    return
+  }
+
   const newPost = await api.createPost(payload)
   const createdPost = newPost || {
     id: Date.now(),
@@ -432,10 +477,61 @@ async function handleCompleteTask(id) {
   }
 }
 
+// 10 執行記錄 Action (Figma Screen 10)
+const activeExecutionTask = ref({
+  id: 1,
+  title: '拍一張今天的天空',
+  description: '用照片或文字逐步記錄執行過程，完成後發布成果。'
+})
+
+function handleExecuteTask(task) {
+  activeExecutionTask.value = task || {
+    id: 1,
+    title: '拍一張今天的天空',
+    description: '用照片或文字逐步記錄執行過程，完成後發布成果。'
+  }
+  setTab('execution')
+}
+
+async function handleSaveTaskProgress({ taskId, steps, note }) {
+  const pTask = myTasks.value.private.find(t => t.id === taskId)
+  if (pTask) pTask.progress_note = note
+  const pubTask = myTasks.value.public.find(t => t.id === taskId || t.post_id === taskId)
+  if (pubTask) pubTask.progress_note = note
+  await api.updateTaskProgress(taskId, note)
+}
+
+async function handleFinishTaskExecution({ taskId, taskTitle, steps, submissionContent }) {
+  await handleCompleteTask(taskId)
+  const linkedPost = posts.value.find(p => p.id === taskId || p.title === taskTitle || (taskTitle && taskTitle.includes(p.title)))
+  if (linkedPost) {
+    await handleSubmitResult({
+      postId: linkedPost.id,
+      content: submissionContent || '完成任務成果打卡！'
+    })
+  }
+}
+
 function handleUpdateTaskProgress({ id, note }) {
   const task = myTasks.value.private.find(t => t.id === id)
   if (task) task.progress_note = note
   api.updateTaskProgress(id, note)
+}
+
+// 02 貼文 Action: 收藏靈感貼文 (RUICHIEN 設計註釋: 按鈕"收藏靈感")
+async function handleSaveInspirationPost(post) {
+  const todayStr = '2026/06/24'
+  const newIns = {
+    id: Date.now(),
+    title: post.title,
+    preview_content: post.content || '貼文連結 / 照片預覽',
+    image_url: post.image_url || '',
+    date_group: todayStr,
+    is_pinned: false
+  }
+  inspirations.value.unshift(newIns)
+  profileData.value.stats.inspirations++
+  await api.createInspiration(newIns)
 }
 
 // 06 靈感 Action
@@ -448,6 +544,20 @@ async function handleAddInspiration(payload) {
 
 function handleAddInspirationText(text) {
   handleAddInspiration({ title: text })
+}
+
+// RUICHIEN 設計註釋: 推至私人任務區
+async function handlePushInspirationToPrivateTask(item) {
+  await handleCreatePrivateTask(item.title)
+}
+
+// RUICHIEN 設計註釋: 點擊直接編輯
+async function handleUpdateInspiration({ id, title }) {
+  const item = inspirations.value.find(i => i.id === id)
+  if (item) {
+    item.title = title
+    await api.updateInspiration(id, title)
+  }
 }
 
 async function handleDeleteInspiration(id) {

@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <!-- Quick Note Prompt Box (Figma Screen 06) -->
+    <!-- Quick Note Prompt Box (Figma Screen 06 - 依設計註釋：直接打字後，儲存/取消) -->
     <div class="figma-card quick-note-card">
       <input 
         v-model="quickNoteText" 
@@ -30,13 +30,10 @@
         placeholder="今天有甚麼想法嗎？馬上記錄下來吧！"
         @keyup.enter="handleQuickSubmit"
       />
-      <button 
-        v-if="quickNoteText.trim()" 
-        class="btn-dark btn-xs" 
-        @click="handleQuickSubmit"
-      >
-        記下
-      </button>
+      <div v-if="quickNoteText.trim()" class="quick-note-actions">
+        <button class="btn-dark btn-xs" @click="handleQuickSubmit">儲存</button>
+        <button class="btn-outline btn-xs" @click="quickNoteText = ''">取消</button>
+      </div>
     </div>
 
     <!-- Grouped Inspirations (Matching Figma 06) -->
@@ -53,7 +50,29 @@
             <div class="inspiration-main-col">
               <div class="inspiration-title-row">
                 <span class="item-num">{{ idx + 1 }}.</span>
-                <span class="item-text">{{ item.title }}</span>
+                
+                <!-- 點擊直接編輯 (依設計註釋) -->
+                <div v-if="editingItemId === item.id" class="inline-edit-wrapper">
+                  <input 
+                    v-model="editingText" 
+                    class="inline-edit-input"
+                    autofocus
+                    @keyup.enter="saveInlineEdit(item)"
+                    @keyup.esc="cancelInlineEdit"
+                    @blur="saveInlineEdit(item)"
+                  />
+                  <button class="inline-save-btn" title="儲存" @mousedown.prevent="saveInlineEdit(item)">
+                    ✓
+                  </button>
+                </div>
+                <span 
+                  v-else 
+                  class="item-text clickable-edit-text" 
+                  title="點擊直接編輯"
+                  @click="startInlineEdit(item)"
+                >
+                  {{ item.title }}
+                </span>
               </div>
 
               <!-- Preview box for item with link or image (Item 2 in Figma) -->
@@ -62,23 +81,35 @@
               </div>
             </div>
 
-            <!-- Action Icons (Figma: Arrow Up, Pencil Edit, Trash) -->
+            <!-- Action Icons (Figma: 推至私人任務區 ↑, 點擊直接編輯 ✎, 刪除) -->
             <div class="inspiration-actions">
-              <button class="icon-btn" title="分享 / 複製" @click="handleShare(item)">
+              <button 
+                class="icon-btn push-task-btn" 
+                title="推至私人任務區" 
+                @click="pushToPrivate(item)"
+              >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="12" y1="19" x2="12" y2="5"/>
                   <polyline points="5 12 12 5 19 12"/>
                 </svg>
               </button>
 
-              <button class="icon-btn" title="編輯" @click="startEdit(item)">
+              <button 
+                class="icon-btn edit-btn" 
+                title="點擊直接編輯" 
+                @click="startInlineEdit(item)"
+              >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
               </button>
 
-              <button class="icon-btn delete-btn" title="刪除" @click="$emit('delete-inspiration', item.id)">
+              <button 
+                class="icon-btn delete-btn" 
+                title="刪除" 
+                @click="promptDelete(item)"
+              >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="3 6 5 6 21 6"/>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -94,18 +125,15 @@
       </div>
     </div>
 
-    <!-- Edit Inspiration Modal -->
-    <div v-if="showEditModal" class="modal-backdrop" @click.self="showEditModal = false">
-      <div class="modal-card">
-        <h3 class="card-title">編輯靈感內容</h3>
-        <textarea 
-          v-model="editItemText" 
-          class="textarea-control"
-          placeholder="修改靈感..."
-        ></textarea>
+    <!-- 二次確認是否刪除彈窗 (RUICHIEN 設計註釋: 二次確認是否刪除) -->
+    <div v-if="itemToDelete" class="modal-backdrop" @click.self="itemToDelete = null">
+      <div class="modal-card confirm-modal">
+        <h3 class="card-title">確定刪除這則靈感？</h3>
+        <p class="confirm-message">「{{ itemToDelete.title }}」</p>
+        <p class="confirm-submessage">刪除後將無法復原，是否確認刪除？</p>
         <div class="modal-footer">
-          <button class="btn-outline" @click="showEditModal = false">取消</button>
-          <button class="btn-dark" @click="saveEditItem">儲存更新</button>
+          <button class="btn-outline" @click="itemToDelete = null">取消</button>
+          <button class="btn-danger" @click="confirmDelete">確認刪除</button>
         </div>
       </div>
     </div>
@@ -113,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 
 const props = defineProps({
   inspirations: {
@@ -122,14 +150,20 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['add-inspiration', 'delete-inspiration', 'search'])
+const emit = defineEmits([
+  'add-inspiration', 
+  'delete-inspiration', 
+  'update-inspiration',
+  'push-to-private-task',
+  'search'
+])
 
 const searchQuery = ref('')
 const quickNoteText = ref('')
 
-const showEditModal = ref(false)
-const editingItem = ref(null)
-const editItemText = ref('')
+// 直接編輯狀態 (RUICHIEN 設計註釋: 點擊直接編輯)
+const editingItemId = ref(null)
+const editingText = ref('')
 
 const groupedInspirations = computed(() => {
   const groups = {}
@@ -152,24 +186,39 @@ function handleQuickSubmit() {
   quickNoteText.value = ''
 }
 
-function handleShare(item) {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(item.title)
-    alert('已複製靈感內容：' + item.title)
-  }
+// RUICHIEN 設計註釋: 推至私人任務區
+function pushToPrivate(item) {
+  emit('push-to-private-task', item)
 }
 
-function startEdit(item) {
-  editingItem.value = item
-  editItemText.value = item.title
-  showEditModal.value = true
+// RUICHIEN 設計註釋: 點擊直接編輯
+function startInlineEdit(item) {
+  editingItemId.value = item.id
+  editingText.value = item.title
 }
 
-function saveEditItem() {
-  if (editingItem.value && editItemText.value.trim()) {
-    editingItem.value.title = editItemText.value.trim()
+function saveInlineEdit(item) {
+  if (editingItemId.value !== item.id) return
+  if (editingText.value.trim()) {
+    item.title = editingText.value.trim()
+    emit('update-inspiration', { id: item.id, title: item.title })
   }
-  showEditModal.value = false
+  editingItemId.value = null
+  editingText.value = ''
+}
+
+// RUICHIEN 設計註釋: 二次確認是否刪除
+const itemToDelete = ref(null)
+
+function promptDelete(item) {
+  itemToDelete.value = item
+}
+
+function confirmDelete() {
+  if (itemToDelete.value) {
+    emit('delete-inspiration', itemToDelete.value.id)
+    itemToDelete.value = null
+  }
 }
 </script>
 
@@ -342,6 +391,68 @@ function saveEditItem() {
   color: #FA5252;
 }
 
+.quick-note-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clickable-edit-text {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 1px 4px;
+  transition: var(--transition);
+}
+
+.clickable-edit-text:hover {
+  background: var(--bg-subtle);
+  color: var(--text-main);
+  text-decoration: underline;
+  text-decoration-style: dashed;
+}
+
+.inline-edit-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.inline-edit-input {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  font-size: 13px;
+  color: var(--text-main);
+  font-family: inherit;
+  outline: none;
+}
+
+.inline-edit-input:focus {
+  border-color: var(--text-main);
+}
+
+.inline-save-btn {
+  background: var(--bg-dark);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.push-task-btn:hover {
+  color: #2F9E44;
+}
+
+.edit-btn:hover {
+  color: #1971C2;
+}
+
 .empty-hint {
   padding: 30px;
   text-align: center;
@@ -352,10 +463,44 @@ function saveEditItem() {
   border: 1px dashed var(--border-main);
 }
 
+.confirm-modal {
+  max-width: 320px;
+  text-align: center;
+}
+
+.confirm-message {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 12px 0 6px;
+  line-height: 1.4;
+}
+
+.confirm-submessage {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
 .modal-footer {
   display: flex;
+  gap: 10px;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 10px;
+}
+
+.btn-danger {
+  background: #FA5252;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-danger:hover {
+  background: #E03131;
 }
 </style>

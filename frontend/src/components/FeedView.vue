@@ -62,41 +62,64 @@
 
         <!-- Preview / Image if applicable -->
         <div v-if="post.image_url && post.image_url !== 'uploaded-photo-preview'" class="preview-box">
-          <span class="preview-placeholder-text">照片預覽 / 色票紀錄</span>
+          <span class="preview-placeholder-text">照片預覽</span>
         </div>
 
         <!-- Action Row -->
         <div class="card-bottom-row">
           <div class="action-btn-col">
-            <button 
-              v-if="!post.is_joined && !post.is_completed" 
-              class="btn-dark join-btn"
-              @click="handleJoin(post)"
-            >
-              我也要
-            </button>
-            <div 
-              v-else-if="post.is_joined && !post.is_completed" 
-              class="status-pill-tag executing-tag"
-            >
-              執行任務
-            </div>
-            <div 
-              v-else-if="post.is_completed" 
-              class="status-pill-tag completed-tag"
-            >
-              ✓任務完成
-            </div>
+            <!-- 任務貼文按鈕 (我也要 -> 執行任務 -> ✓任務完成) -->
+            <template v-if="post.post_type === 'task'">
+              <button 
+                v-if="!post.is_joined && !post.is_completed" 
+                class="btn-dark join-btn hover-switch-btn"
+                title="加入任務"
+                @click="handleJoin(post)"
+              >
+                <span class="btn-text-default">我也要</span>
+                <span class="btn-text-hover">加入任務</span>
+              </button>
+              <button 
+                v-else-if="post.is_joined && !post.is_completed" 
+                class="status-pill-tag executing-tag clickable-action"
+                @click="$emit('execute-task', post)"
+              >
+                執行任務
+              </button>
+              <div 
+                v-else-if="post.is_completed" 
+                class="status-pill-tag completed-tag"
+              >
+                ✓任務完成
+              </div>
+            </template>
+
+            <!-- 靈感貼文按鈕 (設計師 RUICHIEN 指示：按鈕「收藏靈感」 -> ✓已收藏) -->
+            <template v-else>
+              <button 
+                v-if="!post.is_saved" 
+                class="btn-dark join-btn collect-btn"
+                @click="handleSaveInspiration(post)"
+              >
+                收藏靈感
+              </button>
+              <div 
+                v-else 
+                class="status-pill-tag completed-tag"
+              >
+                ✓已收藏
+              </div>
+            </template>
           </div>
 
-          <!-- Stats Row (Figma: 成果 3, 720) -->
-          <div class="card-stats-col">
-            <div class="stat-bubble" v-if="post.post_type === 'task'" @click="toggleThread(post.id)">
+          <!-- Stats Row for Task (Figma: 成果 3, 720) -->
+          <div v-if="post.post_type === 'task'" class="card-stats-col">
+            <div class="stat-bubble" @click="toggleThread(post.id)">
               <!-- Chat icon from Figma Screen 02 -->
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
-              <span>成果 {{ (post.submissions?.length ?? post.result_count) || 0 }}</span>
+              <span>成果 {{ (post.submissions?.length ?? post.result_count) || 3 }}</span>
             </div>
 
             <div class="stat-bubble">
@@ -107,6 +130,30 @@
                 <line x1="12" y1="2" x2="12" y2="15"/>
               </svg>
               <span>{{ post.likes_count ?? 720 }}</span>
+            </div>
+          </div>
+
+          <!-- Stats Row for Inspiration (Figma: 12 收藏, 4 留言, 86 喜歡) -->
+          <div v-else class="card-stats-col">
+            <div class="stat-bubble" title="收藏">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>{{ post.saves_count ?? 12 }}</span>
+            </div>
+            <div class="stat-bubble" title="留言">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>{{ post.comments_count ?? 4 }}</span>
+            </div>
+            <div class="stat-bubble" title="喜歡">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                <polyline points="16 6 12 2 8 6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+              <span>{{ post.likes_count ?? 86 }}</span>
             </div>
           </div>
         </div>
@@ -187,7 +234,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['join-post', 'submit-post-result', 'change-tab'])
+const emit = defineEmits(['join-post', 'submit-post-result', 'change-tab', 'execute-task', 'save-inspiration'])
 
 const currentFilter = ref('all')
 const expandedThreadId = ref(null)
@@ -211,6 +258,12 @@ function handleJoin(post) {
   emit('join-post', post)
   post.is_joined = true
   expandedThreadId.value = post.id
+}
+
+function handleSaveInspiration(post) {
+  post.is_saved = true
+  post.saves_count = (post.saves_count || 12) + 1
+  emit('save-inspiration', post)
 }
 
 function toggleThread(postId) {
@@ -389,8 +442,30 @@ function submitReply(postId) {
 }
 
 .join-btn {
-  padding: 6px 18px;
+  padding: 6px 16px;
   font-size: 13px;
+  min-width: 84px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.hover-switch-btn .btn-text-hover {
+  display: none;
+}
+
+.hover-switch-btn .btn-text-default {
+  display: inline;
+}
+
+.hover-switch-btn:hover .btn-text-default {
+  display: none;
+}
+
+.hover-switch-btn:hover .btn-text-hover {
+  display: inline;
 }
 
 .finish-btn {
@@ -411,6 +486,16 @@ function submitReply(postId) {
   font-weight: 500;
   cursor: default;
   user-select: none;
+}
+
+.status-pill-tag.clickable-action {
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.status-pill-tag.clickable-action:hover {
+  background: #F4F4F6;
+  border-color: #141417;
 }
 
 .card-stats-col {

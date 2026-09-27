@@ -16,7 +16,7 @@
         <input 
           v-model="inputTask" 
           type="text" 
-          placeholder="輸入一件今天想完成的小事" 
+          placeholder="輸入一件今天想完成的事情" 
           class="input-control"
           @keyup.enter="handleAddTask"
         />
