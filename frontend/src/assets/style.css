@@ -136,27 +136,6 @@ body {
   }
 }
 
-.auth-back-btn {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: #FFFFFF;
-  border: 1px solid #DBDBD9;
-  border-radius: 20px;
-  font-size: 13px;
-  font-family: inherit;
-  font-weight: 500;
-  color: #141417;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.auth-back-btn:hover {
-  background: #F0F0ED;
-}
-
 /* Main Application Layout Container */
 .app-layout-container {
   width: 100%;

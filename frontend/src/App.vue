@@ -3,14 +3,6 @@
     <!-- CASE A: Dedicated Auth Page (登入 / 建立帳號 / 忘記密碼 - 獨立全頁面，無側邊欄干擾，桌面與手機自適應) -->
     <div v-if="currentTab === 'auth'" class="auth-page-wrapper">
       <div class="auth-card-shell">
-        <div class="auth-card-top-bar">
-          <button class="auth-guest-link" @click="setTab('feed')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-            <span>返回主站 / 貼文區</span>
-          </button>
-        </div>
         <LoginView @login-success="handleLoginSuccess" />
       </div>
     </div>
@@ -24,7 +16,7 @@
         @change-tab="setTab"
         @open-create-post="setTab('create')"
         @open-daily-task="setTab('onboarding')"
-        @logout="setTab('auth')"
+        @logout="handleLogout"
       />
 
       <!-- 2. 中間主內容區（電腦版居中舒適閱讀寬度 640px，手機版 100% 滿版 RWD） -->
@@ -90,7 +82,7 @@
           :profile="profileData"
           :initial-is-other-user="viewingOtherUser"
           @update-profile="handleUpdateProfile"
-          @navigate-auth="setTab('auth')"
+          @navigate-auth="handleLogout"
           @navigate-onboarding="setTab('onboarding')"
         />
       </main>
@@ -133,6 +125,7 @@ import * as api from './api/client.js'
 
 // Active Tab ('feed' | 'onboarding' | 'create' | 'tasks' | 'task-execute' | 'inspirations' | 'profile' | 'auth')
 const currentTab = ref('feed')
+const isLoggedIn = ref(true)
 const viewingOtherUser = ref(false)
 
 // Active task being executed
@@ -307,8 +300,17 @@ async function loadDataFromBackend() {
 }
 
 function setTab(tab) {
+  if (!isLoggedIn.value && tab !== 'auth') {
+    currentTab.value = 'auth'
+    return
+  }
   currentTab.value = tab
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function handleLogout() {
+  isLoggedIn.value = false
+  currentTab.value = 'auth'
 }
 
 function finishDailyTaskSetup() {
@@ -534,11 +536,12 @@ async function handleUpdateProfile(data) {
 }
 
 function handleLoginSuccess(user) {
+  isLoggedIn.value = true
   currentUser.value.username = user.username
   if (profileData.value.user) {
     profileData.value.user.username = user.username
   }
-  setTab('feed')
+  currentTab.value = 'feed'
 }
 </script>
 
