@@ -1,30 +1,5 @@
 <template>
   <div class="auth-view-container">
-    <!-- View Switcher Tabs on top for easy testing -->
-    <div class="auth-nav-switch">
-      <button 
-        class="auth-mode-btn" 
-        :class="{ active: authMode === 'login' }"
-        @click="authMode = 'login'"
-      >
-        登入帳號
-      </button>
-      <button 
-        class="auth-mode-btn" 
-        :class="{ active: authMode === 'register' }"
-        @click="authMode = 'register'"
-      >
-        建立帳號
-      </button>
-      <button 
-        class="auth-mode-btn" 
-        :class="{ active: authMode === 'forgot' }"
-        @click="authMode = 'forgot'"
-      >
-        忘記密碼
-      </button>
-    </div>
-
     <!-- Alert / Toast -->
     <div v-if="alertMessage" class="auth-alert-box">
       {{ alertMessage }}
@@ -338,10 +313,9 @@ function handleForgotSubmit() {
 }
 
 .auth-screen-card {
-  background: #FFFFFF;
-  border-radius: 12px;
-  border: 1px solid #DBDBD9;
-  padding: 32px 24px;
+  background: transparent;
+  border: none;
+  padding: 16px 8px;
   display: flex;
   flex-direction: column;
   gap: 24px;

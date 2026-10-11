@@ -1,32 +1,8 @@
 <template>
-  <div class="web-app-root">
-    <!-- CASE A: Dedicated Auth Page (登入 / 建立帳號 / 忘記密碼) -->
-    <div v-if="currentTab === 'auth'" class="auth-page-wrapper">
-      <div class="auth-card-shell">
-        <button class="auth-back-btn" @click="setTab('feed')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-          <span>返回貼文區首頁</span>
-        </button>
-        <LoginView @login-success="handleLoginSuccess" />
-      </div>
-    </div>
-
-    <!-- CASE B: Main Application with Full Desktop & Mobile RWD -->
-    <div v-else class="app-layout-container">
-      <!-- 1. 電腦版左側導航列（手機與窄螢幕自動隱藏） -->
-      <Sidebar 
-        :current-tab="currentTab"
-        :current-user="currentUser"
-        @change-tab="setTab"
-        @open-create-post="setTab('create')"
-        @open-daily-task="setTab('onboarding')"
-        @logout="setTab('auth')"
-      />
-
-      <!-- 2. 中間主內容區（電腦版居中舒適閱讀寬度，手機版 100% 滿版 RWD） -->
-      <main class="main-flow-content">
+  <div class="web-page-wrapper">
+    <!-- Centered Mobile-Style Web App Container (390px on Desktop, 100% on Mobile RWD) -->
+    <div class="mobile-web-container">
+      <main class="app-main-body">
         <!-- 01 & 08 & 10. 今日任務引導 -->
         <DailyTaskView 
           v-if="currentTab === 'onboarding'"
@@ -91,22 +67,17 @@
           @navigate-auth="setTab('auth')"
           @navigate-onboarding="setTab('onboarding')"
         />
+
+        <!-- 12 & 13 & 14. 帳號認證 (登入 / 註冊 / 忘記密碼) -->
+        <LoginView 
+          v-else-if="currentTab === 'auth'"
+          @login-success="handleLoginSuccess"
+        />
       </main>
 
-      <!-- 3. 電腦版右側面板（大螢幕顯示，小於 1120px 與手機自動隱藏） -->
-      <RightPanel 
-        :daily-tasks="dailyTasks"
-        :posts="posts"
-        @add-daily-task="handleAddDailyTask"
-        @toggle-daily-task="handleToggleDailyTask"
-        @open-daily-task="setTab('onboarding')"
-        @change-tab="setTab"
-        @add-inspiration="handleAddInspirationText"
-      />
-
-      <!-- 4. 手機版底部導航列（小於 768px 時固定浮現，電腦版自動隱藏） -->
+      <!-- 底部導航列（Onboarding、Auth、TaskExecute 頁面時隱藏，其餘常駐） -->
       <BottomNav 
-        v-if="currentTab !== 'onboarding' && currentTab !== 'task-execute'"
+        v-if="currentTab !== 'onboarding' && currentTab !== 'auth' && currentTab !== 'task-execute'"
         :current-tab="currentTab"
         @change-tab="setTab"
       />
@@ -116,8 +87,6 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import Sidebar from './components/Sidebar.vue'
-import RightPanel from './components/RightPanel.vue'
 import BottomNav from './components/BottomNav.vue'
 import DailyTaskView from './components/DailyTaskView.vue'
 import FeedView from './components/FeedView.vue'
