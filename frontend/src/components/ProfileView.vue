@@ -132,6 +132,17 @@
           <button class="modal-cancel-btn" @click="showEditModal = false">取消</button>
           <button class="modal-save-btn" @click="saveProfile">儲存更新</button>
         </div>
+
+        <div class="modal-logout-row">
+          <button type="button" class="modal-logout-text-btn" @click="$emit('logout'); showEditModal = false">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>登出帳號</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -162,7 +173,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update-profile', 'navigate-auth', 'navigate-onboarding'])
+const emit = defineEmits(['update-profile', 'logout', 'navigate-onboarding'])
 
 const isOtherUser = ref(props.initialIsOtherUser)
 const isFollowing = ref(true)
@@ -643,5 +654,33 @@ function openItemDetail(item) {
   border-radius: 14px;
   font-size: 12px;
   cursor: pointer;
+}
+
+.modal-logout-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #EDEDEC;
+}
+
+.modal-logout-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #E53935;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.modal-logout-text-btn:hover {
+  background: #FEECEB;
 }
 </style>

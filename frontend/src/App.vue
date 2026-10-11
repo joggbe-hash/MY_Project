@@ -16,7 +16,7 @@
         @change-tab="setTab"
         @open-create-post="setTab('create')"
         @open-daily-task="setTab('onboarding')"
-        @logout="handleLogout"
+        @logout="handleLogoutRequest"
       />
 
       <!-- 2. 中間主內容區（電腦版居中舒適閱讀寬度 640px，手機版 100% 滿版 RWD） -->
@@ -82,7 +82,7 @@
           :profile="profileData"
           :initial-is-other-user="viewingOtherUser"
           @update-profile="handleUpdateProfile"
-          @navigate-auth="handleLogout"
+          @logout="handleLogoutRequest"
           @navigate-onboarding="setTab('onboarding')"
         />
       </main>
@@ -104,6 +104,33 @@
         :current-tab="currentTab"
         @change-tab="setTab"
       />
+    </div>
+
+    <!-- 登出二次確認彈窗 (Logout Confirmation Modal) -->
+    <div v-if="showLogoutConfirm" class="modal-backdrop" @click.self="showLogoutConfirm = false">
+      <div class="modal-card logout-confirm-modal">
+        <div class="logout-modal-header">
+          <div class="logout-icon-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E53935" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </div>
+          <h3 class="logout-modal-title">確認要登出帳號嗎？</h3>
+        </div>
+        <p class="logout-modal-desc">
+          登出後將返回登入頁面，需要重新輸入帳號密碼才能再次進入系統。
+        </p>
+        <div class="logout-modal-actions">
+          <button class="btn-cancel" @click="showLogoutConfirm = false">
+            取消
+          </button>
+          <button class="btn-confirm-logout" @click="confirmLogout">
+            確認登出
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -308,7 +335,14 @@ function setTab(tab) {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-function handleLogout() {
+const showLogoutConfirm = ref(false)
+
+function handleLogoutRequest() {
+  showLogoutConfirm.value = true
+}
+
+function confirmLogout() {
+  showLogoutConfirm.value = false
   isLoggedIn.value = false
   currentTab.value = 'auth'
 }

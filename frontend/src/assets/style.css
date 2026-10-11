@@ -616,6 +616,87 @@ body {
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.logout-confirm-modal {
+  max-width: 380px !important;
+  padding: 24px !important;
+  border-radius: 16px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.logout-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logout-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #FEECEB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logout-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #141417;
+  margin: 0;
+}
+
+.logout-modal-desc {
+  font-size: 13px;
+  color: #75757A;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.logout-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.logout-modal-actions .btn-cancel {
+  padding: 8px 16px;
+  background: #FFFFFF;
+  border: 1px solid #DBDBD9;
+  border-radius: 8px;
+  color: #141417;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.logout-modal-actions .btn-cancel:hover {
+  background: #F0F0ED;
+}
+
+.logout-modal-actions .btn-confirm-logout {
+  padding: 8px 18px;
+  background: #141417;
+  border: 1px solid #141417;
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.logout-modal-actions .btn-confirm-logout:hover {
+  background: #E53935;
+  border-color: #E53935;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
