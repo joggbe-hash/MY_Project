@@ -127,17 +127,6 @@
         <label class="input-label">週進度與統計</label>
         <input v-model="editWeekly" class="modal-input" />
 
-        <div class="modal-quick-links">
-          <div class="quick-link-divider"></div>
-          <button type="button" class="quick-link-row-btn" @click="$emit('navigate-onboarding'); showEditModal = false">
-            <span>📋 前往今日任務設定引導</span>
-            <span class="link-arrow">→</span>
-          </button>
-          <button type="button" class="quick-link-row-btn" @click="$emit('navigate-auth'); showEditModal = false">
-            <span>🔒 前往帳號登入 / 註冊頁面</span>
-            <span class="link-arrow">→</span>
-          </button>
-        </div>
 
         <div class="modal-btn-row">
           <button class="modal-cancel-btn" @click="showEditModal = false">取消</button>
