@@ -16,7 +16,7 @@
         <button 
           v-if="!isOtherUser" 
           class="header-action-btn" 
-          @click="showEditModal = true"
+          @click="$emit('open-settings')"
         >
           編輯帳號設定
         </button>
@@ -26,11 +26,28 @@
     <!-- User Info Card (Screen 07 & 11) -->
     <div class="profile-main-card">
       <div class="user-intro-row">
-        <div class="profile-avatar-circle"></div>
+        <div 
+          class="profile-avatar-circle" 
+          :style="{ backgroundColor: (!isOtherUser && profile?.user?.avatar) ? 'transparent' : (!isOtherUser && profile?.user?.avatar_color ? profile?.user?.avatar_color : '#141417') }"
+        >
+          <img v-if="!isOtherUser && profile?.user?.avatar" :src="profile.user.avatar" class="profile-avatar-img" alt="avatar" />
+          <span v-else class="profile-avatar-char">
+            {{ (isOtherUser ? (viewingUsername || 'others_account') : (profile?.user?.nickname || profile?.user?.username || 'mine_account')).charAt(0).toUpperCase() }}
+          </span>
+        </div>
         <div class="user-meta-column">
-          <div class="user-handle">{{ isOtherUser ? (viewingUsername || 'others_account') : (profile?.user?.username || 'mine_account') }}</div>
+          <div class="user-handle-row">
+            <span class="user-handle">{{ isOtherUser ? (viewingUsername || 'others_account') : (profile?.user?.username || 'mine_account') }}</span>
+            <span v-if="!isOtherUser && profile?.user?.nickname" class="user-nickname-badge">{{ profile.user.nickname }}</span>
+          </div>
           <div class="user-motto-text">{{ profile?.user?.bio || '把靈感變成行動，把行動留下成果' }}</div>
           <div class="user-stats-summary">{{ profile?.user?.weekly_info || '本週完成 5 個任務，收藏 8 則靈感' }}</div>
+          <div v-if="!isOtherUser && profile?.user?.website" class="user-website-row">
+            <span class="website-icon">🔗</span>
+            <a :href="profile.user.website" target="_blank" rel="noopener noreferrer" class="website-link">
+              {{ profile.user.website.replace(/^https?:\/\//, '') }}
+            </a>
+          </div>
         </div>
       </div>
 
@@ -110,33 +127,6 @@
       </div>
     </div>
 
-    <!-- Edit Profile Modal -->
-    <div v-if="showEditModal" class="modal-backdrop" @click.self="showEditModal = false">
-      <div class="modal-window">
-        <h3 class="modal-title">編輯個人檔案</h3>
-        <label class="input-label">個人標語 / 座右銘</label>
-        <input v-model="editBio" class="modal-input" />
-        <label class="input-label">週進度與統計</label>
-        <input v-model="editWeekly" class="modal-input" />
-
-
-        <div class="modal-btn-row">
-          <button class="modal-cancel-btn" @click="showEditModal = false">取消</button>
-          <button class="modal-save-btn" @click="saveProfile">儲存更新</button>
-        </div>
-
-        <div class="modal-logout-row">
-          <button type="button" class="modal-logout-text-btn" @click="$emit('logout'); showEditModal = false">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            <span>登出帳號</span>
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -149,8 +139,12 @@ const props = defineProps({
     default: () => ({
       user: {
         username: 'mine_account',
+        nickname: '我的帳號',
         bio: '把靈感變成行動，把行動留下成果',
-        weekly_info: '本週完成 5 個任務，收藏 8 則靈感'
+        weekly_info: '本週完成 5 個任務，收藏 8 則靈感',
+        avatar: '',
+        avatar_color: '#141417',
+        website: ''
       },
       stats: {
         outcomes: 12,
@@ -169,7 +163,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update-profile', 'logout', 'navigate-onboarding', 'back-to-feed'])
+const emit = defineEmits(['update-profile', 'logout', 'navigate-onboarding', 'back-to-feed', 'open-settings'])
 
 const isOtherUser = ref(props.initialIsOtherUser)
 watch(() => props.initialIsOtherUser, (val) => {
@@ -177,10 +171,6 @@ watch(() => props.initialIsOtherUser, (val) => {
 })
 const isFollowing = ref(true)
 const activeSubtab = ref('成果')
-const showEditModal = ref(false)
-
-const editBio = ref(props.profile?.user?.bio || '把靈感變成行動，把行動留下成果')
-const editWeekly = ref(props.profile?.user?.weekly_info || '本週完成 5 個任務，收藏 8 則靈感')
 
 const currentSubtabs = computed(() => {
   if (isOtherUser.value) {
@@ -207,11 +197,6 @@ const portfolioItems = ref([
 
 function handleSendMessage() {
   alert('發送訊息至 others_account')
-}
-
-function saveProfile() {
-  emit('update-profile', { bio: editBio.value, weekly_info: editWeekly.value })
-  showEditModal.value = false
 }
 
 function openItemDetail(item) {
@@ -314,10 +299,25 @@ function openItemDetail(item) {
 .profile-avatar-circle {
   width: 64px;
   height: 64px;
-  background: #D6DBDE;
   border-radius: 9999px;
   border: 1px solid #E6E6E6;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-avatar-char {
+  color: #FFFFFF;
+  font-size: 24px;
+  font-weight: 700;
 }
 
 .user-meta-column {
@@ -327,12 +327,29 @@ function openItemDetail(item) {
   gap: 4px;
 }
 
+.user-handle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .user-handle {
   color: #141414;
   font-size: 18px;
   font-family: 'Noto Sans TC', sans-serif;
   font-weight: 700;
   line-height: 24px;
+}
+
+.user-nickname-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 12px;
+  background: #F4F4F1;
+  border: 1px solid #E2E2DF;
+  font-size: 11px;
+  font-weight: 600;
+  color: #555558;
 }
 
 .user-motto-text {
@@ -349,6 +366,23 @@ function openItemDetail(item) {
   font-family: 'Noto Sans TC', sans-serif;
   font-weight: 400;
   line-height: 16px;
+}
+
+.user-website-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.website-link {
+  font-size: 12px;
+  color: #2563EB;
+  text-decoration: none;
+}
+
+.website-link:hover {
+  text-decoration: underline;
 }
 
 .stats-counters-bar {

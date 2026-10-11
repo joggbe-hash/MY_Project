@@ -79,16 +79,20 @@
     <div class="sidebar-user-section">
       <div 
         class="sidebar-user" 
-        :class="{ active: currentTab === 'profile' }"
+        :class="{ active: currentTab === 'profile' || currentTab === 'edit-profile' }"
         @click="$emit('open-my-profile')"
         title="前往個人檔案"
       >
-        <div class="avatar avatar-sm">
-          <span>{{ (currentUser?.username || 'U').charAt(0).toUpperCase() }}</span>
+        <div 
+          class="avatar avatar-sm"
+          :style="{ backgroundColor: currentUser?.avatar ? 'transparent' : (currentUser?.avatar_color || '#141417') }"
+        >
+          <img v-if="currentUser?.avatar" :src="currentUser.avatar" alt="Avatar" class="sidebar-avatar-img" />
+          <span v-else>{{ (currentUser?.nickname || currentUser?.username || 'U').charAt(0).toUpperCase() }}</span>
         </div>
         <div class="user-info">
-          <div class="user-name">{{ currentUser?.username || 'mine_account' }}</div>
-          <div class="user-handle">{{ currentUser?.weekly_info || '本週完成 5 個任務' }}</div>
+          <div class="user-name">{{ currentUser?.nickname || currentUser?.username || 'mine_account' }}</div>
+          <div class="user-handle">@{{ currentUser?.username || 'mine_account' }}</div>
         </div>
       </div>
       <button class="logout-btn" title="登出帳號" @click="$emit('logout')">
@@ -303,5 +307,12 @@ defineEmits(['change-tab', 'open-create-post', 'open-daily-task', 'open-my-profi
 .user-handle {
   font-size: 11px;
   color: var(--text-secondary);
+}
+
+.sidebar-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 </style>

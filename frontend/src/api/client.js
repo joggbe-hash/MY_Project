@@ -383,12 +383,21 @@ export async function fetchProfile() {
 
 export async function updateProfile(data) {
   const store = getStore()
-  if (data.bio !== undefined) store.profile.user.bio = data.bio
-  if (data.weekly_info !== undefined) store.profile.user.weekly_info = data.weekly_info
-  if (store.user) {
-    if (data.bio !== undefined) store.user.bio = data.bio
-    if (data.weekly_info !== undefined) store.user.weekly_info = data.weekly_info
-  }
+  if (!store.profile) store.profile = { user: {}, stats: {} }
+  if (!store.profile.user) store.profile.user = {}
+  if (!store.user) store.user = {}
+
+  const fields = [
+    'username', 'nickname', 'bio', 'weekly_info', 
+    'avatar', 'avatar_color', 'email', 'website', 
+    'is_private', 'show_albums', 'notify_tasks', 'notify_likes'
+  ]
+  fields.forEach(f => {
+    if (data[f] !== undefined) {
+      store.profile.user[f] = data[f]
+      store.user[f] = data[f]
+    }
+  })
   saveStore(store)
   return store.profile
 }

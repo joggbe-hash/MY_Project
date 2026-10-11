@@ -87,6 +87,17 @@
           @logout="handleLogoutRequest"
           @back-to-feed="setTab('feed')"
           @navigate-onboarding="setTab('onboarding')"
+          @open-settings="setTab('edit-profile')"
+        />
+
+        <!-- 08. 編輯帳號設定專屬頁面 (改名子、頭像、簡介、隱私、安全性) -->
+        <AccountSettingsView 
+          v-else-if="currentTab === 'edit-profile'"
+          :current-user="currentUser"
+          :profile="profileData"
+          @back="setTab('profile')"
+          @save="handleSaveAccountSettings"
+          @logout="handleLogoutRequest"
         />
       </main>
 
@@ -103,7 +114,7 @@
 
       <!-- 4. 手機版底部導航列（小於 768px 時固定浮現，電腦版自動隱藏） -->
       <BottomNav 
-        v-if="currentTab !== 'onboarding' && currentTab !== 'task-execute'"
+        v-if="currentTab !== 'onboarding' && currentTab !== 'task-execute' && currentTab !== 'edit-profile'"
         :current-tab="currentTab"
         @change-tab="handleBottomNavChange"
       />
@@ -150,10 +161,11 @@ import TasksView from './components/TasksView.vue'
 import TaskExecuteView from './components/TaskExecuteView.vue'
 import InspirationsView from './components/InspirationsView.vue'
 import ProfileView from './components/ProfileView.vue'
+import AccountSettingsView from './components/AccountSettingsView.vue'
 import LoginView from './components/LoginView.vue'
 import * as api from './api/client.js'
 
-// Active Tab ('feed' | 'onboarding' | 'create' | 'tasks' | 'task-execute' | 'inspirations' | 'profile' | 'auth')
+// Active Tab ('feed' | 'onboarding' | 'create' | 'tasks' | 'task-execute' | 'inspirations' | 'profile' | 'edit-profile' | 'auth')
 const currentTab = ref('feed')
 const isLoggedIn = ref(true)
 const viewingOtherUser = ref(false)
@@ -172,7 +184,15 @@ const currentUser = ref({
   username: 'mine_account',
   nickname: '我的帳號',
   bio: '把靈感變成行動，把行動留下成果',
-  weekly_info: '本週完成 5 個任務，收藏 8 則靈感'
+  weekly_info: '本週完成 5 個任務，收藏 8 則靈感',
+  avatar: '',
+  avatar_color: '#141417',
+  website: 'https://metoo.app/@mine_account',
+  email: 'user@metoo.app',
+  is_private: false,
+  show_albums: true,
+  notify_tasks: true,
+  notify_likes: true
 })
 
 // Data states
@@ -301,8 +321,12 @@ const filteredInspirations = computed(() => {
 const profileData = ref({
   user: {
     username: 'mine_account',
+    nickname: '我的帳號',
     bio: '把靈感變成行動，把行動留下成果',
-    weekly_info: '本週完成 5 個任務，收藏 8 則靈感'
+    weekly_info: '本週完成 5 個任務，收藏 8 則靈感',
+    avatar: '',
+    avatar_color: '#141417',
+    website: 'https://metoo.app/@mine_account'
   },
   stats: {
     outcomes: 12,
@@ -328,6 +352,12 @@ async function loadDataFromBackend() {
 
   const ins = await api.fetchInspirations()
   if (ins && ins.length) inspirations.value = ins
+
+  const prof = await api.fetchProfile()
+  if (prof && prof.user) {
+    Object.assign(profileData.value.user, prof.user)
+    Object.assign(currentUser.value, prof.user)
+  }
 }
 
 function setTab(tab) {
@@ -585,6 +615,22 @@ async function handleUpdateProfile(data) {
   if (profileData.value.user) {
     profileData.value.user.bio = data.bio
     profileData.value.user.weekly_info = data.weekly_info
+  }
+  await api.updateProfile(data)
+}
+
+async function handleSaveAccountSettings(data) {
+  Object.assign(currentUser.value, data)
+  if (profileData.value.user) {
+    Object.assign(profileData.value.user, {
+      username: data.username,
+      nickname: data.nickname,
+      bio: data.bio,
+      weekly_info: data.weekly_info,
+      avatar: data.avatar,
+      avatar_color: data.avatar_color,
+      website: data.website
+    })
   }
   await api.updateProfile(data)
 }
