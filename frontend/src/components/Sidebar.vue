@@ -54,20 +54,6 @@
         </div>
         <span>靈感紀錄</span>
       </button>
-
-      <button 
-        class="nav-btn" 
-        :class="{ active: currentTab === 'profile' }"
-        @click="$emit('change-tab', 'profile')"
-      >
-        <div class="icon-wrap">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-        </div>
-        <span>個人主頁</span>
-      </button>
     </nav>
 
     <!-- Prominent Action Buttons -->
@@ -91,12 +77,17 @@
 
     <!-- User Profile Micro Card & Logout -->
     <div class="sidebar-user-section">
-      <div class="sidebar-user" @click="$emit('change-tab', 'profile')">
+      <div 
+        class="sidebar-user" 
+        :class="{ active: currentTab === 'profile' }"
+        @click="$emit('change-tab', 'profile')"
+        title="前往個人檔案"
+      >
         <div class="avatar avatar-sm">
           <span>{{ (currentUser?.username || 'U').charAt(0).toUpperCase() }}</span>
         </div>
         <div class="user-info">
-          <div class="user-name">{{ currentUser?.username || 'lavender_nation' }}</div>
+          <div class="user-name">{{ currentUser?.username || 'mine_account' }}</div>
           <div class="user-handle">{{ currentUser?.weekly_info || '本週完成 5 個任務' }}</div>
         </div>
       </div>
@@ -274,6 +265,12 @@ defineEmits(['change-tab', 'open-create-post', 'open-daily-task', 'logout'])
 
 .sidebar-user:hover {
   background: #ECECE9;
+}
+
+.sidebar-user.active {
+  background: #FFFFFF;
+  border-color: #141417;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .logout-btn {
