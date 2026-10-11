@@ -89,10 +89,9 @@ defineEmits(['change-tab', 'open-create-post'])
   display: flex;
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   width: 100%;
-  max-width: 390px;
   min-height: 66px;
   padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
   background: #FFFFFF;
@@ -104,12 +103,9 @@ defineEmits(['change-tab', 'open-create-post'])
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
 }
 
-@media (max-width: 480px) {
+@media (min-width: 769px) {
   .mobile-bottom-nav {
-    left: 0;
-    right: 0;
-    transform: none;
-    max-width: 100%;
+    display: none !important;
   }
 }
 
