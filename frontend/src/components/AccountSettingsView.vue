@@ -161,20 +161,6 @@
             />
             <span class="form-field-hint">會顯示在您的個人檔案主頁，督促自己達成目標</span>
           </div>
-
-          <!-- Website / Social Link -->
-          <div class="form-group full-width">
-            <label class="form-label">個人網站或社群連結</label>
-            <div class="input-with-prefix">
-              <span class="input-prefix">🔗</span>
-              <input 
-                v-model="form.website" 
-                type="url" 
-                placeholder="https://instagram.com/yourname" 
-                class="form-input" 
-              />
-            </div>
-          </div>
         </div>
       </section>
 
@@ -399,8 +385,7 @@ const form = reactive({
   weekly_info: props.currentUser?.weekly_info || props.profile?.user?.weekly_info || '本週完成 5 個任務，收藏 8 則靈感',
   avatar: props.currentUser?.avatar || props.profile?.user?.avatar || '',
   avatar_color: props.currentUser?.avatar_color || props.profile?.user?.avatar_color || '#141417',
-  website: props.currentUser?.website || props.profile?.user?.website || 'https://metoo.app/@mine_account',
-  email: props.currentUser?.email || props.profile?.user?.email || 'user@metoo.app',
+  email: props.currentUser?.email || props.profile?.user?.email || 'user@example.com',
   is_private: props.currentUser?.is_private || false,
   show_albums: props.currentUser?.show_albums ?? true,
   notify_tasks: props.currentUser?.notify_tasks ?? true,
@@ -420,7 +405,6 @@ watch(() => props.currentUser, (newVal) => {
     if (newVal.weekly_info) form.weekly_info = newVal.weekly_info
     if (newVal.avatar !== undefined) form.avatar = newVal.avatar
     if (newVal.avatar_color) form.avatar_color = newVal.avatar_color
-    if (newVal.website) form.website = newVal.website
     if (newVal.email) form.email = newVal.email
     if (newVal.is_private !== undefined) form.is_private = newVal.is_private
   }
@@ -469,7 +453,6 @@ async function handleSave() {
       weekly_info: form.weekly_info.trim(),
       avatar: form.avatar,
       avatar_color: form.avatar_color,
-      website: form.website.trim(),
       email: form.email.trim(),
       is_private: form.is_private,
       show_albums: form.show_albums,

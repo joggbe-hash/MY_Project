@@ -187,8 +187,7 @@ const currentUser = ref({
   weekly_info: '本週完成 5 個任務，收藏 8 則靈感',
   avatar: '',
   avatar_color: '#141417',
-  website: 'https://metoo.app/@mine_account',
-  email: 'user@metoo.app',
+  email: 'user@example.com',
   is_private: false,
   show_albums: true,
   notify_tasks: true,
@@ -325,8 +324,7 @@ const profileData = ref({
     bio: '把靈感變成行動，把行動留下成果',
     weekly_info: '本週完成 5 個任務，收藏 8 則靈感',
     avatar: '',
-    avatar_color: '#141417',
-    website: 'https://metoo.app/@mine_account'
+    avatar_color: '#141417'
   },
   stats: {
     outcomes: 12,
@@ -355,6 +353,7 @@ async function loadDataFromBackend() {
 
   const prof = await api.fetchProfile()
   if (prof && prof.user) {
+    delete prof.user.website
     Object.assign(profileData.value.user, prof.user)
     Object.assign(currentUser.value, prof.user)
   }
@@ -628,8 +627,7 @@ async function handleSaveAccountSettings(data) {
       bio: data.bio,
       weekly_info: data.weekly_info,
       avatar: data.avatar,
-      avatar_color: data.avatar_color,
-      website: data.website
+      avatar_color: data.avatar_color
     })
   }
   await api.updateProfile(data)

@@ -36,18 +36,9 @@
           </span>
         </div>
         <div class="user-meta-column">
-          <div class="user-handle-row">
-            <span class="user-handle">{{ isOtherUser ? (viewingUsername || 'others_account') : (profile?.user?.username || 'mine_account') }}</span>
-            <span v-if="!isOtherUser && profile?.user?.nickname" class="user-nickname-badge">{{ profile.user.nickname }}</span>
-          </div>
+          <div class="user-handle">{{ isOtherUser ? (viewingUsername || 'others_account') : (profile?.user?.username || 'mine_account') }}</div>
           <div class="user-motto-text">{{ profile?.user?.bio || '把靈感變成行動，把行動留下成果' }}</div>
           <div class="user-stats-summary">{{ profile?.user?.weekly_info || '本週完成 5 個任務，收藏 8 則靈感' }}</div>
-          <div v-if="!isOtherUser && profile?.user?.website" class="user-website-row">
-            <span class="website-icon">🔗</span>
-            <a :href="profile.user.website" target="_blank" rel="noopener noreferrer" class="website-link">
-              {{ profile.user.website.replace(/^https?:\/\//, '') }}
-            </a>
-          </div>
         </div>
       </div>
 
@@ -366,23 +357,6 @@ function openItemDetail(item) {
   font-family: 'Noto Sans TC', sans-serif;
   font-weight: 400;
   line-height: 16px;
-}
-
-.user-website-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 2px;
-}
-
-.website-link {
-  font-size: 12px;
-  color: #2563EB;
-  text-decoration: none;
-}
-
-.website-link:hover {
-  text-decoration: underline;
 }
 
 .stats-counters-bar {

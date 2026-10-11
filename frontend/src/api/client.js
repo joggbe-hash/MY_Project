@@ -389,7 +389,7 @@ export async function updateProfile(data) {
 
   const fields = [
     'username', 'nickname', 'bio', 'weekly_info', 
-    'avatar', 'avatar_color', 'email', 'website', 
+    'avatar', 'avatar_color', 'email', 
     'is_private', 'show_albums', 'notify_tasks', 'notify_likes'
   ]
   fields.forEach(f => {
@@ -398,6 +398,8 @@ export async function updateProfile(data) {
       store.user[f] = data[f]
     }
   })
+  delete store.profile.user.website
+  if (store.user) delete store.user.website
   saveStore(store)
   return store.profile
 }
