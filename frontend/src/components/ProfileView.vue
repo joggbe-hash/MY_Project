@@ -1,32 +1,24 @@
 <template>
   <div class="profile-view">
-    <!-- View Top Header (Screen 07: 編輯帳號設定 / Screen 11: 編輯資料) -->
+    <!-- View Top Header (Screen 07: 編輯帳號設定 / Screen 11: 他人檔案) -->
     <div class="profile-header-bar">
-      <div class="header-left-title">個人</div>
+      <div class="header-left-box">
+        <button v-if="isOtherUser" class="profile-back-btn" @click="$emit('back-to-feed')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span>返回</span>
+        </button>
+        <span class="header-left-title">{{ isOtherUser ? '個人檔案' : '個人' }}</span>
+      </div>
 
       <div class="header-right-actions">
-        <!-- Switch between Mine / Others profile for full Figma 07 & 11 preview -->
-        <button 
-          class="profile-toggle-pill" 
-          @click="isOtherUser = !isOtherUser"
-          title="切換「我的個人檔案」與「他人個人檔案」"
-        >
-          {{ isOtherUser ? '切換為我的檔案' : '查看他人檔案' }}
-        </button>
-
         <button 
           v-if="!isOtherUser" 
           class="header-action-btn" 
           @click="showEditModal = true"
         >
           編輯帳號設定
-        </button>
-        <button 
-          v-else 
-          class="header-action-btn" 
-          @click="showEditModal = true"
-        >
-          編輯資料
         </button>
       </div>
     </div>
@@ -36,7 +28,7 @@
       <div class="user-intro-row">
         <div class="profile-avatar-circle"></div>
         <div class="user-meta-column">
-          <div class="user-handle">{{ isOtherUser ? 'others_account' : (profile?.user?.username || 'mine_account') }}</div>
+          <div class="user-handle">{{ isOtherUser ? (viewingUsername || 'others_account') : (profile?.user?.username || 'mine_account') }}</div>
           <div class="user-motto-text">{{ profile?.user?.bio || '把靈感變成行動，把行動留下成果' }}</div>
           <div class="user-stats-summary">{{ profile?.user?.weekly_info || '本週完成 5 個任務，收藏 8 則靈感' }}</div>
         </div>
@@ -149,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   profile: {
@@ -170,12 +162,19 @@ const props = defineProps({
   initialIsOtherUser: {
     type: Boolean,
     default: false
+  },
+  viewingUsername: {
+    type: String,
+    default: ''
   }
 })
 
-const emit = defineEmits(['update-profile', 'logout', 'navigate-onboarding'])
+const emit = defineEmits(['update-profile', 'logout', 'navigate-onboarding', 'back-to-feed'])
 
 const isOtherUser = ref(props.initialIsOtherUser)
+watch(() => props.initialIsOtherUser, (val) => {
+  isOtherUser.value = val
+})
 const isFollowing = ref(true)
 const activeSubtab = ref('成果')
 const showEditModal = ref(false)
@@ -245,26 +244,30 @@ function openItemDetail(item) {
   line-height: 30px;
 }
 
-.header-right-actions {
+.header-left-box {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.profile-toggle-pill {
+.profile-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 4px 10px;
   border-radius: 14px;
   border: 1px solid #DBDBD9;
-  background: #F8F8F6;
-  font-size: 11px;
-  color: #75757A;
+  background: #FFFFFF;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #141417;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.profile-toggle-pill:hover {
-  background: #EAEAE6;
-  color: #141417;
+.profile-back-btn:hover {
+  background: #F0F0ED;
 }
 
 .header-action-btn {

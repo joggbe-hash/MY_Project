@@ -11,6 +11,53 @@
           </svg>
         </div>
       </div>
+
+      <!-- 搜尋列：搜尋使用者帳號、貼文 -->
+      <div class="feed-search-bar">
+        <div class="search-input-inner">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#75757A" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="搜尋使用者帳號、貼文..." 
+            class="feed-search-input"
+          />
+          <button v-if="searchQuery" class="clear-search-btn" @click="searchQuery = ''">
+            ✕
+          </button>
+        </div>
+
+        <!-- 搜尋使用者下拉選單 -->
+        <div v-if="searchQuery.trim()" class="user-search-results">
+          <div class="user-search-title">使用者帳號 (點擊查看他人檔案)</div>
+          <div v-if="matchingUsers.length === 0" class="user-search-empty">
+            查無相符使用者，下方為貼文過濾結果
+          </div>
+          <div 
+            v-for="user in matchingUsers" 
+            :key="user.username" 
+            class="user-search-item"
+            @click="handleSelectUser(user.username)"
+          >
+            <div class="user-search-avatar">
+              {{ user.username.charAt(0).toUpperCase() }}
+            </div>
+            <div class="user-search-meta">
+              <div class="user-search-name">@{{ user.username }}</div>
+              <div class="user-search-bio">{{ user.bio }}</div>
+            </div>
+            <div class="user-search-action">
+              <span>查看檔案</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <!-- Filters Row -->
       <div class="feed-filters-bar">
@@ -244,6 +291,7 @@ const currentSource = ref('所有來源')
 const isSourceDropdownOpen = ref(false)
 const expandedThreadId = ref(null)
 const replyText = ref({})
+const searchQuery = ref('')
 
 const defaultSubmissions = [
   { id: 1, author_name: 'kb_q_p', time_ago: '4小時', content: '應該長這樣', image_url: 'sky-1' },
@@ -251,14 +299,52 @@ const defaultSubmissions = [
   { id: 3, author_name: '同學B', time_ago: '2小時', content: '我看倒像綠豆糕。' }
 ]
 
+const knownUsers = computed(() => {
+  const map = new Map()
+  map.set('others_account', { username: 'others_account', bio: '把靈感變成行動，把行動留下成果' })
+  map.set('bbb', { username: 'bbb', bio: '生活狀態打卡者 · 今日天空任務發起人' })
+  map.set('dafuu0000', { username: 'dafuu0000', bio: '配色與靈感創作者 · 色票愛好者' })
+  map.set('lavender_nation', { username: 'lavender_nation', bio: '天空觀察愛好者' })
+  map.set('aaa', { username: 'aaa', bio: '生活整理打卡' })
+  map.set('kb_q_p', { username: 'kb_q_p', bio: '成果紀錄達人' })
+
+  if (props.posts) {
+    props.posts.forEach(p => {
+      if (p.author_name && !map.has(p.author_name)) {
+        map.set(p.author_name, { username: p.author_name, bio: '社群創作者' })
+      }
+    })
+  }
+  return Array.from(map.values())
+})
+
+const matchingUsers = computed(() => {
+  if (!searchQuery.value.trim()) return []
+  const q = searchQuery.value.trim().toLowerCase()
+  return knownUsers.value.filter(u => u.username.toLowerCase().includes(q))
+})
+
+function handleSelectUser(username) {
+  emit('view-user-profile', username)
+  searchQuery.value = ''
+}
+
 const filteredPosts = computed(() => {
+  let list = props.posts
   if (currentFilter.value === 'task') {
-    return props.posts.filter(p => p.post_type === 'task')
+    list = list.filter(p => p.post_type === 'task')
+  } else if (currentFilter.value === 'inspiration') {
+    list = list.filter(p => p.post_type === 'inspiration')
   }
-  if (currentFilter.value === 'inspiration') {
-    return props.posts.filter(p => p.post_type === 'inspiration')
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase()
+    list = list.filter(p => 
+      (p.title && p.title.toLowerCase().includes(q)) || 
+      (p.content && p.content.toLowerCase().includes(q)) ||
+      (p.author_name && p.author_name.toLowerCase().includes(q))
+    )
   }
-  return props.posts
+  return list
 })
 
 function selectSource(source) {
@@ -308,6 +394,144 @@ function submitReply(postId) {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.feed-search-bar {
+  position: relative;
+  width: 100%;
+  margin: 4px 0 2px;
+}
+
+.search-input-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F7F7F5;
+  border: 1px solid #DBDBD9;
+  border-radius: 20px;
+  padding: 6px 14px;
+  transition: all 0.15s ease;
+}
+
+.search-input-inner:focus-within {
+  background: #FFFFFF;
+  border-color: #141417;
+  box-shadow: 0 0 0 2px rgba(20, 20, 23, 0.06);
+}
+
+.feed-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  font-family: inherit;
+  color: #141417;
+}
+
+.feed-search-input::placeholder {
+  color: #9E9EA4;
+}
+
+.clear-search-btn {
+  background: none;
+  border: none;
+  color: #75757A;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.user-search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid #DBDBD9;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  z-index: 50;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.user-search-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #75757A;
+  padding: 4px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.user-search-empty {
+  font-size: 12px;
+  color: #9E9EA4;
+  padding: 8px;
+  text-align: center;
+}
+
+.user-search-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-search-item:hover {
+  background: #F4F4F1;
+}
+
+.user-search-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #D1D6DB;
+  color: #141417;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.user-search-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.user-search-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #141417;
+}
+
+.user-search-bio {
+  font-size: 11px;
+  color: #75757A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-search-action {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: #141417;
+  font-weight: 500;
 }
 
 .view-title {

@@ -17,6 +17,7 @@
         @open-create-post="setTab('create')"
         @open-daily-task="setTab('onboarding')"
         @logout="handleLogoutRequest"
+        @open-my-profile="openMyProfile"
       />
 
       <!-- 2. 中間主內容區（電腦版居中舒適閱讀寬度 640px，手機版 100% 滿版 RWD） -->
@@ -81,8 +82,10 @@
           v-else-if="currentTab === 'profile'"
           :profile="profileData"
           :initial-is-other-user="viewingOtherUser"
+          :viewing-username="viewingUsername"
           @update-profile="handleUpdateProfile"
           @logout="handleLogoutRequest"
+          @back-to-feed="setTab('feed')"
           @navigate-onboarding="setTab('onboarding')"
         />
       </main>
@@ -102,7 +105,7 @@
       <BottomNav 
         v-if="currentTab !== 'onboarding' && currentTab !== 'task-execute'"
         :current-tab="currentTab"
-        @change-tab="setTab"
+        @change-tab="handleBottomNavChange"
       />
     </div>
 
@@ -154,6 +157,7 @@ import * as api from './api/client.js'
 const currentTab = ref('feed')
 const isLoggedIn = ref(true)
 const viewingOtherUser = ref(false)
+const viewingUsername = ref('')
 
 // Active task being executed
 const activeExecutingTask = ref({
@@ -397,12 +401,28 @@ function startExecuteTaskFromPost(post) {
 }
 
 function openUserProfile(username) {
-  if (username === 'mine_account' || username === currentUser.value.username) {
+  if (!username || username === 'mine_account' || username === currentUser.value.username) {
     viewingOtherUser.value = false
+    viewingUsername.value = currentUser.value.username
   } else {
     viewingOtherUser.value = true
+    viewingUsername.value = username
   }
   setTab('profile')
+}
+
+function openMyProfile() {
+  viewingOtherUser.value = false
+  viewingUsername.value = currentUser.value.username
+  setTab('profile')
+}
+
+function handleBottomNavChange(tab) {
+  if (tab === 'profile') {
+    openMyProfile()
+  } else {
+    setTab(tab)
+  }
 }
 
 async function handleSubmitResult({ postId, content }) {

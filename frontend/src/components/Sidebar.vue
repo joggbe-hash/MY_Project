@@ -80,7 +80,7 @@
       <div 
         class="sidebar-user" 
         :class="{ active: currentTab === 'profile' }"
-        @click="$emit('change-tab', 'profile')"
+        @click="$emit('open-my-profile')"
         title="前往個人檔案"
       >
         <div class="avatar avatar-sm">
@@ -114,7 +114,7 @@ defineProps({
     default: () => ({})
   }
 })
-defineEmits(['change-tab', 'open-create-post', 'open-daily-task', 'logout'])
+defineEmits(['change-tab', 'open-create-post', 'open-daily-task', 'open-my-profile', 'logout'])
 </script>
 
 <style scoped>
