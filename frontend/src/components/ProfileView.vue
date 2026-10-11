@@ -126,6 +126,19 @@
         <input v-model="editBio" class="modal-input" />
         <label class="input-label">週進度與統計</label>
         <input v-model="editWeekly" class="modal-input" />
+
+        <div class="modal-quick-links">
+          <div class="quick-link-divider"></div>
+          <button type="button" class="quick-link-row-btn" @click="$emit('navigate-onboarding'); showEditModal = false">
+            <span>📋 前往今日任務設定引導</span>
+            <span class="link-arrow">→</span>
+          </button>
+          <button type="button" class="quick-link-row-btn" @click="$emit('navigate-auth'); showEditModal = false">
+            <span>🔒 前往帳號登入 / 註冊頁面</span>
+            <span class="link-arrow">→</span>
+          </button>
+        </div>
+
         <div class="modal-btn-row">
           <button class="modal-cancel-btn" @click="showEditModal = false">取消</button>
           <button class="modal-save-btn" @click="saveProfile">儲存更新</button>
@@ -160,7 +173,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update-profile'])
+const emit = defineEmits(['update-profile', 'navigate-auth', 'navigate-onboarding'])
 
 const isOtherUser = ref(props.initialIsOtherUser)
 const isFollowing = ref(true)
@@ -595,6 +608,42 @@ function openItemDetail(item) {
   border-radius: 14px;
   font-size: 12px;
   cursor: pointer;
+}
+
+.modal-quick-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.quick-link-divider {
+  height: 1px;
+  background: #EFEFEA;
+  margin: 4px 0;
+}
+
+.quick-link-row-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #F7F7F5;
+  border: 1px solid #E5E5E3;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #141417;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.quick-link-row-btn:hover {
+  background: #EFEFEA;
+}
+
+.link-arrow {
+  color: #75757A;
+  font-weight: 700;
 }
 
 .modal-save-btn {

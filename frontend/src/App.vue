@@ -1,115 +1,92 @@
 <template>
-  <div class="app-root-wrapper">
-    <div class="app-wrapper">
-      <div class="desktop-app-container">
-        <!-- 1. 電腦版左側導航（手機 RWD 時自動隱藏） -->
-        <Sidebar 
-          :current-tab="currentTab"
-          :current-user="currentUser"
-          @change-tab="setTab"
-          @open-create-post="setTab('create')"
-          @open-daily-task="setTab('onboarding')"
-          @logout="setTab('auth')"
+  <div class="web-mobile-viewport">
+    <div class="mobile-app-container">
+      <!-- Main Views -->
+      <main class="mobile-main-content">
+        <!-- 01 & 08 & 10. 今日任務引導 -->
+        <DailyTaskView 
+          v-if="currentTab === 'onboarding'"
+          :tasks="dailyTasks"
+          @add-task="handleAddDailyTask"
+          @delete-task="handleDeleteDailyTask"
+          @toggle-task="handleToggleDailyTask"
+          @finish-setup="finishDailyTaskSetup"
         />
 
-        <!-- 2. 中間主內容區（電腦版居中，手機 RWD 時自適應為滿版） -->
-        <main class="main-feed-flow">
-          <!-- 01 & 08 & 10. 今日任務引導 -->
-          <DailyTaskView 
-            v-if="currentTab === 'onboarding'"
-            :tasks="dailyTasks"
-            @add-task="handleAddDailyTask"
-            @delete-task="handleDeleteDailyTask"
-            @toggle-task="handleToggleDailyTask"
-            @finish-setup="finishDailyTaskSetup"
-          />
-
-          <!-- 02 & 03 & 16. 貼文區 -->
-          <FeedView 
-            v-else-if="currentTab === 'feed'"
-            :posts="posts"
-            @join-post="handleJoinPost"
-            @submit-post-result="handleSubmitResult"
-            @execute-task="startExecuteTaskFromPost"
-            @view-user-profile="openUserProfile"
-          />
-
-          <!-- 04. 我也要發文 -->
-          <CreatePostView 
-            v-else-if="currentTab === 'create'"
-            @publish="handlePublishPost"
-          />
-
-          <!-- 05. 我的任務 -->
-          <TasksView 
-            v-else-if="currentTab === 'tasks'"
-            :private-tasks="myTasks.private"
-            :public-tasks="myTasks.public"
-            :completed-tasks="myTasks.completed"
-            @execute-task="handleStartExecuteTask"
-            @create-private-task="handleCreatePrivateTask"
-            @complete-task="handleCompleteTask"
-          />
-
-          <!-- 09. 任務執行 / 過程記錄 -->
-          <TaskExecuteView 
-            v-else-if="currentTab === 'task-execute'"
-            :task="activeExecutingTask"
-            @back="handleBackFromExecute"
-            @save-progress="handleSaveTaskProgress"
-            @complete-task="handleFinishTaskExecution"
-          />
-
-          <!-- 06. 靈感清單 -->
-          <InspirationsView 
-            v-else-if="currentTab === 'inspirations'"
-            :inspirations="filteredInspirations"
-            @add-inspiration="handleAddInspiration"
-            @delete-inspiration="handleDeleteInspiration"
-            @search="handleSearchInspirations"
-          />
-
-          <!-- 07 & 11. 個人主頁 -->
-          <ProfileView 
-            v-else-if="currentTab === 'profile'"
-            :profile="profileData"
-            :initial-is-other-user="viewingOtherUser"
-            @update-profile="handleUpdateProfile"
-          />
-
-          <!-- 12 & 13 & 14. 帳號認證 -->
-          <LoginView 
-            v-else-if="currentTab === 'auth'"
-            @login-success="handleLoginSuccess"
-          />
-        </main>
-
-        <!-- 3. 電腦版右側面板（平板與手機 RWD 時自動隱藏） -->
-        <RightPanel 
-          :daily-tasks="dailyTasks"
+        <!-- 02 & 03 & 16. 貼文區 -->
+        <FeedView 
+          v-else-if="currentTab === 'feed'"
           :posts="posts"
-          @add-daily-task="handleAddDailyTask"
-          @toggle-daily-task="handleToggleDailyTask"
-          @open-daily-task="setTab('onboarding')"
-          @change-tab="setTab"
-          @add-inspiration="handleAddInspirationText"
+          @join-post="handleJoinPost"
+          @submit-post-result="handleSubmitResult"
+          @execute-task="startExecuteTaskFromPost"
+          @view-user-profile="openUserProfile"
         />
 
-        <!-- 4. 手機版底部導航列（手機 RWD 時固定於底部，電腦版自動隱藏） -->
-        <BottomNav 
-          v-if="currentTab !== 'onboarding' && currentTab !== 'auth'"
-          :current-tab="currentTab"
-          @change-tab="setTab"
+        <!-- 04. 我也要發文 -->
+        <CreatePostView 
+          v-else-if="currentTab === 'create'"
+          @publish="handlePublishPost"
         />
-      </div>
+
+        <!-- 05. 我的任務 -->
+        <TasksView 
+          v-else-if="currentTab === 'tasks'"
+          :private-tasks="myTasks.private"
+          :public-tasks="myTasks.public"
+          :completed-tasks="myTasks.completed"
+          @execute-task="handleStartExecuteTask"
+          @create-private-task="handleCreatePrivateTask"
+          @complete-task="handleCompleteTask"
+        />
+
+        <!-- 09. 任務執行 / 過程記錄 -->
+        <TaskExecuteView 
+          v-else-if="currentTab === 'task-execute'"
+          :task="activeExecutingTask"
+          @back="handleBackFromExecute"
+          @save-progress="handleSaveTaskProgress"
+          @complete-task="handleFinishTaskExecution"
+        />
+
+        <!-- 06. 靈感清單 -->
+        <InspirationsView 
+          v-else-if="currentTab === 'inspirations'"
+          :inspirations="filteredInspirations"
+          @add-inspiration="handleAddInspiration"
+          @delete-inspiration="handleDeleteInspiration"
+          @search="handleSearchInspirations"
+        />
+
+        <!-- 07 & 11. 個人主頁 -->
+        <ProfileView 
+          v-else-if="currentTab === 'profile'"
+          :profile="profileData"
+          :initial-is-other-user="viewingOtherUser"
+          @update-profile="handleUpdateProfile"
+          @navigate-auth="setTab('auth')"
+          @navigate-onboarding="setTab('onboarding')"
+        />
+
+        <!-- 12 & 13 & 14. 帳號認證 -->
+        <LoginView 
+          v-else-if="currentTab === 'auth'"
+          @login-success="handleLoginSuccess"
+        />
+      </main>
+
+      <!-- 底部導航列（Onboarding、Auth、TaskExecute 頁面隱藏） -->
+      <BottomNav 
+        v-if="currentTab !== 'onboarding' && currentTab !== 'auth' && currentTab !== 'task-execute'"
+        :current-tab="currentTab"
+        @change-tab="setTab"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import Sidebar from './components/Sidebar.vue'
-import RightPanel from './components/RightPanel.vue'
 import BottomNav from './components/BottomNav.vue'
 import DailyTaskView from './components/DailyTaskView.vue'
 import FeedView from './components/FeedView.vue'
