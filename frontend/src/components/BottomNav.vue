@@ -86,17 +86,27 @@ defineEmits(['change-tab', 'open-create-post'])
 
 <style scoped>
 .mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   width: 100%;
-  max-width: 390px;
-  height: 78px;
-  padding: 7px 10px;
+  min-height: 68px;
+  padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px));
   background: #FFFFFF;
   border-top: 1px solid #DBDBD9;
   display: flex;
-  justify-content: center;
+  justify-content: space-around;
   align-items: center;
-  gap: 8px;
+  z-index: 1000;
   box-sizing: border-box;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+}
+
+@media (min-width: 769px) {
+  .mobile-bottom-nav {
+    display: none !important;
+  }
 }
 
 .nav-item {

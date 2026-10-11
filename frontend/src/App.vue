@@ -1,147 +1,8 @@
 <template>
   <div class="app-root-wrapper">
-    <!-- Top Mode Control & Figma Screen Quick Selector Toolbar -->
-    <header class="app-mode-toolbar">
-      <div class="mode-toggle-group">
-        <button 
-          class="mode-switch-btn" 
-          :class="{ active: viewMode === 'phone' }"
-          @click="setViewMode('phone')"
-        >
-          <span>📱 手機原型 (Figma 1:1)</span>
-        </button>
-        <button 
-          class="mode-switch-btn" 
-          :class="{ active: viewMode === 'desktop' }"
-          @click="setViewMode('desktop')"
-        >
-          <span>💻 自適應桌面版</span>
-        </button>
-      </div>
-
-      <div class="screen-selector-wrap">
-        <span class="screen-select-label">快速切換 Figma 畫面：</span>
-        <select v-model="selectedFigmaScreen" class="screen-select-dropdown" @change="jumpToFigmaScreen">
-          <option value="01">Screen 01: 今日任務 (設定引導)</option>
-          <option value="02">Screen 02: 貼文區 (主動態)</option>
-          <option value="03">Screen 03: 貼文區 (成果展示串)</option>
-          <option value="04">Screen 04: 我也要發文</option>
-          <option value="05">Screen 05: 我的任務 (私人/公共)</option>
-          <option value="06">Screen 06: 靈感清單 (隨手記錄)</option>
-          <option value="07">Screen 07: 個人主頁 (mine_account)</option>
-          <option value="08">Screen 08: 今日任務 (空狀態 & 跳過)</option>
-          <option value="09">Screen 09: 任務執行 (過程記錄)</option>
-          <option value="10">Screen 10: 今日任務 (任務完成劃線)</option>
-          <option value="11">Screen 11: 個人主頁 (others_account)</option>
-          <option value="12">Screen 12: 登入帳號</option>
-          <option value="13">Screen 13: 建立帳號 (註冊)</option>
-          <option value="14">Screen 14: 忘記密碼</option>
-        </select>
-      </div>
-    </header>
-
-    <!-- =========================================================
-         MODE 1: 390px x 844px Exact Figma Phone Prototype Frame
-         ========================================================= -->
-    <div v-if="viewMode === 'phone'" class="prototype-canvas">
-      <div class="figma-phone-frame">
-        <!-- iPhone Status Bar (9:41 & 電量 100%) -->
-        <div class="phone-status-bar">
-          <span class="status-time">9:41</span>
-          <span class="status-battery">電量 100%</span>
-        </div>
-
-        <!-- Scrollable Inner View Content -->
-        <div class="phone-screen-content">
-          <!-- 01 & 08 & 10. 今日任務引導 -->
-          <DailyTaskView 
-            v-if="currentTab === 'onboarding'"
-            :tasks="dailyTasks"
-            @add-task="handleAddDailyTask"
-            @delete-task="handleDeleteDailyTask"
-            @toggle-task="handleToggleDailyTask"
-            @finish-setup="finishDailyTaskSetup"
-          />
-
-          <!-- 02 & 03 & 16. 貼文區 -->
-          <FeedView 
-            v-else-if="currentTab === 'feed'"
-            :posts="posts"
-            @join-post="handleJoinPost"
-            @submit-post-result="handleSubmitResult"
-            @execute-task="startExecuteTaskFromPost"
-            @view-user-profile="openUserProfile"
-          />
-
-          <!-- 04. 我也要發文 -->
-          <CreatePostView 
-            v-else-if="currentTab === 'create'"
-            @publish="handlePublishPost"
-          />
-
-          <!-- 05. 我的任務 -->
-          <TasksView 
-            v-else-if="currentTab === 'tasks'"
-            :private-tasks="myTasks.private"
-            :public-tasks="myTasks.public"
-            :completed-tasks="myTasks.completed"
-            @execute-task="handleStartExecuteTask"
-            @create-private-task="handleCreatePrivateTask"
-            @complete-task="handleCompleteTask"
-          />
-
-          <!-- 09. 任務執行 / 過程記錄 -->
-          <TaskExecuteView 
-            v-else-if="currentTab === 'task-execute'"
-            :task="activeExecutingTask"
-            @back="handleBackFromExecute"
-            @save-progress="handleSaveTaskProgress"
-            @complete-task="handleFinishTaskExecution"
-          />
-
-          <!-- 06. 靈感清單 -->
-          <InspirationsView 
-            v-else-if="currentTab === 'inspirations'"
-            :inspirations="filteredInspirations"
-            @add-inspiration="handleAddInspiration"
-            @delete-inspiration="handleDeleteInspiration"
-            @search="handleSearchInspirations"
-          />
-
-          <!-- 07 & 11. 個人主頁 -->
-          <ProfileView 
-            v-else-if="currentTab === 'profile'"
-            :profile="profileData"
-            :initial-is-other-user="viewingOtherUser"
-            @update-profile="handleUpdateProfile"
-          />
-
-          <!-- 12 & 13 & 14. 帳號認證 -->
-          <LoginView 
-            v-else-if="currentTab === 'auth'"
-            @login-success="handleLoginSuccess"
-          />
-        </div>
-
-        <!-- Phone Bottom Navigation (Hidden on Onboarding & Auth) -->
-        <div 
-          v-if="currentTab !== 'onboarding' && currentTab !== 'auth'" 
-          class="phone-bottom-nav-wrap"
-        >
-          <BottomNav 
-            :current-tab="currentTab"
-            @change-tab="setTab"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- =========================================================
-         MODE 2: Desktop Responsive Multi-Column Layout
-         ========================================================= -->
-    <div v-else class="app-wrapper">
+    <div class="app-wrapper">
       <div class="desktop-app-container">
-        <!-- Left Sidebar -->
+        <!-- 1. 電腦版左側導航（手機 RWD 時自動隱藏） -->
         <Sidebar 
           :current-tab="currentTab"
           :current-user="currentUser"
@@ -151,7 +12,7 @@
           @logout="setTab('auth')"
         />
 
-        <!-- Center Main Flow -->
+        <!-- 2. 中間主內容區（電腦版居中，手機 RWD 時自適應為滿版） -->
         <main class="main-feed-flow">
           <!-- 01 & 08 & 10. 今日任務引導 -->
           <DailyTaskView 
@@ -223,7 +84,7 @@
           />
         </main>
 
-        <!-- Right Panel -->
+        <!-- 3. 電腦版右側面板（平板與手機 RWD 時自動隱藏） -->
         <RightPanel 
           :daily-tasks="dailyTasks"
           :posts="posts"
@@ -234,7 +95,7 @@
           @add-inspiration="handleAddInspirationText"
         />
 
-        <!-- Mobile Bottom Nav when on small mobile screens in desktop mode -->
+        <!-- 4. 手機版底部導航列（手機 RWD 時固定於底部，電腦版自動隱藏） -->
         <BottomNav 
           v-if="currentTab !== 'onboarding' && currentTab !== 'auth'"
           :current-tab="currentTab"
@@ -259,10 +120,6 @@ import InspirationsView from './components/InspirationsView.vue'
 import ProfileView from './components/ProfileView.vue'
 import LoginView from './components/LoginView.vue'
 import * as api from './api/client.js'
-
-// View Modes: 'phone' (390px Figma 1:1) | 'desktop' (Responsive Web)
-const viewMode = ref('phone')
-const selectedFigmaScreen = ref('02')
 
 // Active Tab ('feed' | 'onboarding' | 'create' | 'tasks' | 'task-execute' | 'inspirations' | 'profile' | 'auth')
 const currentTab = ref('feed')
@@ -439,81 +296,9 @@ async function loadDataFromBackend() {
   if (ins && ins.length) inspirations.value = ins
 }
 
-function setViewMode(mode) {
-  viewMode.value = mode
-}
-
 function setTab(tab) {
   currentTab.value = tab
   window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-// Jump directly to any of the 14 Figma screens
-function jumpToFigmaScreen() {
-  const s = selectedFigmaScreen.value
-  viewMode.value = 'phone'
-
-  switch (s) {
-    case '01':
-      currentTab.value = 'onboarding'
-      dailyTasks.value = [
-        { id: 1, title: '完成專題使用流程圖', is_completed: false },
-        { id: 2, title: '拍一張今天的天空', is_completed: false },
-        { id: 3, title: '整理書桌 10 分鐘', is_completed: false }
-      ]
-      break
-    case '02':
-      currentTab.value = 'feed'
-      posts.value[0].is_completed = false
-      posts.value[0].is_joined = false
-      break
-    case '03':
-      currentTab.value = 'feed'
-      posts.value[0].is_completed = true
-      break
-    case '04':
-      currentTab.value = 'create'
-      break
-    case '05':
-      currentTab.value = 'tasks'
-      break
-    case '06':
-      currentTab.value = 'inspirations'
-      break
-    case '07':
-      currentTab.value = 'profile'
-      viewingOtherUser.value = false
-      break
-    case '08':
-      currentTab.value = 'onboarding'
-      dailyTasks.value = []
-      break
-    case '09':
-      activeExecutingTask.value = {
-        id: 201,
-        title: '拍一張今天的天空',
-        description: '用照片或文字逐步記錄執行過程，完成後發布成果。'
-      }
-      currentTab.value = 'task-execute'
-      break
-    case '10':
-      currentTab.value = 'onboarding'
-      dailyTasks.value = [
-        { id: 1, title: '拍一張今天的天空', is_completed: false },
-        { id: 2, title: '整理書桌 10 分鐘', is_completed: false },
-        { id: 3, title: '完成專題使用流程圖', is_completed: true }
-      ]
-      break
-    case '11':
-      currentTab.value = 'profile'
-      viewingOtherUser.value = true
-      break
-    case '12':
-    case '13':
-    case '14':
-      currentTab.value = 'auth'
-      break
-  }
 }
 
 function finishDailyTaskSetup() {
