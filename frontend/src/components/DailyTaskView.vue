@@ -1,6 +1,6 @@
 <template>
   <div class="daily-task-view">
-    <!-- View Header (Figma Screen 01) -->
+    <!-- View Header (Figma Screen 01 & 08 & 10) -->
     <div class="view-header">
       <div class="view-header-title">我也要</div>
       <div class="view-header-subtitle">先把今天想做的事列出來，完成後進入貼文區</div>
@@ -23,7 +23,7 @@
       </div>
 
       <!-- Add Task Button -->
-      <div>
+      <div class="add-btn-wrapper">
         <button 
           class="btn-dark add-task-btn" 
           :disabled="!inputTask.trim()"
@@ -42,29 +42,53 @@
           v-for="(task, idx) in tasks" 
           :key="task.id" 
           class="daily-task-row"
-          :class="{ 'completed-row': task.is_completed }"
-          @click="$emit('toggle-task', task.id)"
+          :class="{ 'is-completed': task.is_completed }"
         >
-          <div class="daily-task-title" :class="{ 'completed-title': task.is_completed }">
-            <template v-if="!task.is_completed">{{ idx + 1 }}. {{ cleanTitle(task.title) }}</template>
-            <template v-else>{{ cleanTitle(task.title) }}</template>
+          <div 
+            class="daily-task-title"
+            :class="{ 'title-done': task.is_completed }"
+            @click="$emit('toggle-task', task.id)"
+          >
+            {{ idx + 1 }}. {{ cleanTitle(task.title) }}
           </div>
-          <button class="task-delete-icon" title="刪除任務" @click.stop="$emit('delete-task', task.id)">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            </svg>
-          </button>
+
+          <div class="task-action-icons">
+            <!-- Toggle complete check icon -->
+            <button 
+              class="task-icon-btn check-icon-btn" 
+              :title="task.is_completed ? '標記為未完成' : '標記為已完成'" 
+              @click="$emit('toggle-task', task.id)"
+            >
+              <svg v-if="task.is_completed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141417" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#75757A" stroke-width="2">
+                <circle cx="12" cy="12" r="9"></circle>
+              </svg>
+            </button>
+
+            <!-- Delete icon -->
+            <button 
+              class="task-icon-btn delete-icon-btn" 
+              title="刪除任務" 
+              @click="$emit('delete-task', task.id)"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#75757A" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <!-- Figma Screen 01 Empty State (無任務) -->
+        <!-- Figma Screen 08 Empty State (無任務) -->
         <div v-if="tasks.length === 0" class="empty-tasks-box">
           <p class="empty-tasks-text">今天還沒有任何任務唷~</p>
         </div>
       </div>
 
       <!-- Bottom Completion / Skip Button -->
-      <div class="task-card-footer">
+      <div class="task-card-footer" :class="{ 'align-right': tasks.length === 0 }">
         <button 
           v-if="tasks.length > 0" 
           class="btn-dark finish-all-btn" 
@@ -94,7 +118,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['add-task', 'delete-task', 'finish-setup'])
+const emit = defineEmits(['add-task', 'delete-task', 'toggle-task', 'finish-setup'])
 
 const inputTask = ref('')
 
@@ -113,114 +137,234 @@ function cleanTitle(title) {
 .daily-task-view {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+}
+
+.view-header {
+  background: #FFFFFF;
+  border-radius: 8px;
+  border: 1px solid #DBDBD9;
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.view-header-title {
+  color: #141417;
+  font-size: 24px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.view-header-subtitle {
+  color: #75757A;
+  font-size: 12px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 400;
 }
 
 .daily-task-card {
+  background: #FFFFFF;
+  border-radius: 8px;
+  outline: 1px solid #DBDBD9;
+  outline-offset: -1px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .card-heading {
   font-size: 18px;
   font-weight: 700;
-  color: var(--text-main);
+  color: #141417;
 }
 
 .card-subheading {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: #75757A;
+  margin-top: -4px;
   line-height: 1.4;
-  margin-top: -6px;
 }
 
 .task-input-wrapper {
   width: 100%;
 }
 
+.input-control {
+  width: 100%;
+  height: 48px;
+  padding: 10px 12px;
+  background: #FFFFFF;
+  border: 1px solid #DBDBD9;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #141417;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.input-control:focus {
+  border-color: #141417;
+}
+
+.input-control::placeholder {
+  color: #75757A;
+}
+
+.add-btn-wrapper {
+  display: flex;
+}
+
 .add-task-btn {
-  padding: 8px 18px;
+  width: 124px;
+  padding: 7px 12px;
+  background: #141417;
+  border-radius: 18px;
+  border: 1px solid #141417;
+  color: #FFFFFF;
   font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.add-task-btn:hover {
+  background: #25252b;
+}
+
+.add-task-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .tasks-section-header {
   font-size: 15px;
   font-weight: 700;
-  color: var(--text-main);
+  color: #141417;
   padding-top: 4px;
 }
 
 .daily-tasks-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .daily-task-row {
+  height: 46px;
+  padding: 12px 14px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  outline: 1px solid #DBDBD9;
+  outline-offset: -1px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-main);
-  border-radius: var(--radius-md);
+  gap: 10px;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.daily-task-row:hover {
+  outline-color: #B8B8B8;
 }
 
 .daily-task-title {
-  font-size: 14px;
-  color: var(--text-main);
-  line-height: 1.3;
+  flex: 1;
+  color: #141417;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.completed-title {
-  color: #B8B8B8;
-  text-decoration: line-through;
+.title-done {
+  color: #B8B8B8 !important;
+  text-decoration: line-through !important;
 }
 
-.task-delete-icon {
+.task-action-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-icon-btn {
   background: none;
   border: none;
-  color: var(--icon-color);
-  cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
 }
 
-.task-delete-icon:hover {
-  color: #FA5252;
-  background: var(--bg-subtle);
+.task-icon-btn:hover {
+  background: #F0F0ED;
 }
 
 .empty-tasks-box {
-  padding: 30px 16px;
+  width: 100%;
+  padding: 24px 0;
   text-align: center;
 }
 
 .empty-tasks-text {
+  color: #75757A;
   font-size: 13px;
-  color: var(--text-secondary);
 }
 
 .task-card-footer {
   display: flex;
+  margin-top: 8px;
+}
+
+.task-card-footer.align-right {
   justify-content: flex-end;
-  padding-top: 12px;
 }
 
 .finish-all-btn {
   width: 100%;
-  padding: 12px;
-  font-size: 15px;
+  padding: 7px 12px;
+  background: #141417;
+  border-radius: 18px;
+  border: 1px solid #141417;
+  color: #FFFFFF;
+  font-size: 13px;
   font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.finish-all-btn:hover {
+  background: #25252b;
 }
 
 .skip-btn {
-  padding: 8px 24px;
-  border-radius: var(--radius-pill);
+  width: 124px;
+  padding: 7px 12px;
+  background: #FFFFFF;
+  border-radius: 18px;
+  outline: 1px solid #DBDBD9;
+  outline-offset: -1px;
+  border: none;
+  color: #141417;
   font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.skip-btn:hover {
+  background: #F5F5F7;
+  outline-color: #B8B8B8;
 }
 </style>

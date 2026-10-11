@@ -27,6 +27,20 @@
 
       <button 
         class="nav-btn" 
+        :class="{ active: currentTab === 'tasks' }"
+        @click="$emit('change-tab', 'tasks')"
+      >
+        <div class="icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 11 12 14 22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <span>任務清單</span>
+      </button>
+
+      <button 
+        class="nav-btn" 
         :class="{ active: currentTab === 'inspirations' }"
         @click="$emit('change-tab', 'inspirations')"
       >
@@ -38,21 +52,7 @@
             <line x1="16" y1="17" x2="8" y2="17"/>
           </svg>
         </div>
-        <span>靈感清單</span>
-      </button>
-
-      <button 
-        class="nav-btn" 
-        :class="{ active: currentTab === 'tasks' || currentTab === 'execution' }"
-        @click="$emit('change-tab', 'tasks')"
-      >
-        <div class="icon-wrap">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 11 12 14 22 4"/>
-            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-          </svg>
-        </div>
-        <span>我的任務</span>
+        <span>靈感紀錄</span>
       </button>
 
       <button 
@@ -67,6 +67,20 @@
           </svg>
         </div>
         <span>個人主頁</span>
+      </button>
+
+      <button 
+        class="nav-btn" 
+        :class="{ active: currentTab === 'auth' }"
+        @click="$emit('change-tab', 'auth')"
+      >
+        <div class="icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <span>帳號 / 登入</span>
       </button>
     </nav>
 

@@ -7,92 +7,68 @@
     </div>
 
     <!-- Main Card Form -->
-    <div class="figma-card create-card">
-      <!-- Type Selector -->
-      <div class="post-type-group">
-        <label class="section-label">選擇貼文類型</label>
-        <div class="type-pills-row">
-          <button 
-            type="button"
-            class="type-pill" 
-            :class="{ active: postType === 'task' }"
-            @click="postType = 'task'"
-          >
-            任務貼文
-          </button>
-          <button 
-            type="button"
-            class="type-pill" 
-            :class="{ active: postType === 'inspiration' }"
-            @click="postType = 'inspiration'"
-          >
-            靈感貼文
-          </button>
-        </div>
+    <div class="create-form-card">
+      <div class="type-selection-title">選擇貼文類型</div>
+
+      <!-- Type Pills Row -->
+      <div class="type-buttons-row">
+        <button 
+          type="button"
+          class="type-btn"
+          :class="{ active: postType === 'task' }"
+          @click="postType = 'task'"
+        >
+          任務貼文
+        </button>
+        <button 
+          type="button"
+          class="type-btn"
+          :class="{ active: postType === 'inspiration' }"
+          @click="postType = 'inspiration'"
+        >
+          靈感貼文
+        </button>
       </div>
 
-      <!-- Privacy Visibility Selector (RUICHIEN 設計註釋: 提供公開/私人選項) -->
-      <div class="privacy-type-group">
-        <label class="section-label">隱私範圍</label>
-        <div class="type-pills-row">
-          <button 
-            type="button"
-            class="type-pill" 
-            :class="{ active: visibility === 'public' }"
-            @click="visibility = 'public'"
-          >
-            🌐 公開
-          </button>
-          <button 
-            type="button"
-            class="type-pill" 
-            :class="{ active: visibility === 'private' }"
-            @click="visibility = 'private'"
-          >
-            🔒 私人
-          </button>
-        </div>
-        <p class="privacy-hint">
-          {{ visibility === 'public' ? '所有人皆可在貼文串看見並回應' : '僅自己可見，將直接收錄於私人任務區' }}
-        </p>
-      </div>
-
-      <!-- Title Input -->
-      <div class="input-group">
-        <label class="input-label">貼文標題：</label>
+      <!-- Title Input Box -->
+      <div class="title-input-box">
         <input 
           v-model="postTitle" 
-          placeholder="請輸入標題..." 
-          class="input-control"
+          placeholder="貼文標題:" 
+          class="title-input"
         />
       </div>
 
-      <!-- Content Textarea -->
-      <div class="input-group">
+      <!-- Content Textarea Box -->
+      <div class="content-textarea-box">
         <textarea 
           v-model="postContent" 
-          class="textarea-control"
           placeholder="寫下你想邀請別人一起做的事，或記錄一則靈感。"
-          rows="4"
+          class="content-textarea"
+          rows="6"
         ></textarea>
       </div>
 
-      <!-- Photo Upload Mock Box (Figma Screen 04 matching) -->
-      <div class="photo-upload-box" @click="toggleMockImage">
-        <div class="upload-icon-circle">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="19" x2="12" y2="5"/>
-            <polyline points="5 12 12 5 19 12"/>
+      <!-- Photo Upload Box (Screen 04: 可加入照片) -->
+      <label class="photo-upload-container">
+        <input type="file" accept="image/*" class="hidden-file-input" @change="handleImagePick" />
+        <div v-if="uploadedPreview" class="photo-has-preview">
+          <img :src="uploadedPreview" class="preview-img" />
+          <span class="preview-remove-hint">點擊更換照片</span>
+        </div>
+        <div v-else class="upload-placeholder-content">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B4B50" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
           </svg>
+          <span class="upload-text">可加入照片</span>
         </div>
-        <div class="upload-label">
-          {{ hasImage ? '已加入照片 (點擊移除)' : '可加入照片' }}
-        </div>
-      </div>
+      </label>
 
-      <!-- Submit Button -->
+      <!-- Publish Button -->
       <button 
-        class="btn-dark publish-btn" 
+        class="publish-submit-btn" 
         :disabled="!postTitle.trim()"
         @click="handlePublish"
       >
@@ -108,28 +84,31 @@ import { ref } from 'vue'
 const emit = defineEmits(['publish'])
 
 const postType = ref('task')
-const visibility = ref('public')
 const postTitle = ref('')
 const postContent = ref('')
-const hasImage = ref(false)
+const uploadedPreview = ref('')
 
-function toggleMockImage() {
-  hasImage.value = !hasImage.value
+function handleImagePick(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    uploadedPreview.value = event.target.result
+  }
+  reader.readAsDataURL(file)
 }
 
 function handlePublish() {
   if (!postTitle.value.trim()) return
   emit('publish', {
     post_type: postType.value,
-    visibility: visibility.value,
     title: postTitle.value.trim(),
     content: postContent.value.trim() || (postType.value === 'task' ? '一起來挑戰看看！' : '看到的好點子，分享給大家。'),
-    image_url: hasImage.value ? 'uploaded-photo-preview' : ''
+    image_url: uploadedPreview.value || ''
   })
   postTitle.value = ''
   postContent.value = ''
-  hasImage.value = false
-  visibility.value = 'public'
+  uploadedPreview.value = ''
 }
 </script>
 
@@ -137,114 +116,223 @@ function handlePublish() {
 .create-post-view {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
-.create-card {
+.view-header {
+  background: #FFFFFF;
+  padding: 12px 18px;
+  border-radius: 8px;
+  border: 1px solid #DBDBD9;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 3px;
 }
 
-.post-type-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.section-label {
-  font-size: 14px;
+.view-header-title {
+  color: #141417;
+  font-size: 24px;
+  font-family: 'Noto Sans TC', sans-serif;
   font-weight: 700;
-  color: var(--text-main);
+  line-height: 1.2;
 }
 
-.input-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 6px;
-  display: block;
+.view-header-subtitle {
+  color: #75757A;
+  font-size: 12px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 400;
 }
 
-.type-pills-row {
-  display: flex;
-  gap: 8px;
-}
-
-.type-pill {
-  flex: 1;
-  padding: 8px 16px;
-  border-radius: var(--radius-pill);
-  font-size: 13px;
-  font-weight: 600;
-  border: 1px solid var(--border-main);
-  background: transparent;
-  color: var(--text-main);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.type-pill.active {
-  background: var(--bg-dark);
-  color: var(--text-white);
-  border-color: var(--bg-dark);
-}
-
-.photo-upload-box {
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-md);
-  padding: 30px 16px;
+.create-form-card {
+  width: 100%;
+  padding: 16px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  outline: 1px solid #DBDBD9;
+  outline-offset: -1px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  background: var(--bg-subtle);
-  transition: var(--transition);
+  gap: 14px;
+  box-sizing: border-box;
 }
 
-.photo-upload-box:hover {
-  background: #ECECE9;
-  border-color: var(--text-main);
+.type-selection-title {
+  color: #141417;
+  font-size: 16px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 700;
 }
 
-.upload-icon-circle {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  border: 1px solid var(--border-main);
+.type-buttons-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-main);
+  gap: 8px;
 }
 
-.upload-label {
+.type-btn {
+  width: 130px;
+  padding: 7px 12px;
+  background: #FFFFFF;
+  border-radius: 18px;
+  outline: 1px solid #DBDBD9;
+  outline-offset: -1px;
+  border: none;
+  color: #141417;
   font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 500;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.publish-btn {
+.type-btn.active {
+  background: #141417;
+  outline-color: #141417;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.title-input-box {
   width: 100%;
   padding: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  margin-top: 6px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  outline: 1px solid #DBDBD9;
+  outline-offset: -1px;
+  box-sizing: border-box;
 }
 
-.privacy-type-group {
+.title-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: #141417;
+}
+
+.title-input::placeholder {
+  color: #75757A;
+}
+
+.content-textarea-box {
+  width: 100%;
+  height: 170px;
+  padding: 12px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  outline: 1px solid #DBDBD9;
+  outline-offset: -1px;
+  box-sizing: border-box;
+}
+
+.content-textarea {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: #141417;
+  resize: none;
+}
+
+.content-textarea::placeholder {
+  color: #75757A;
+  line-height: 1.5;
+}
+
+.photo-upload-container {
+  width: 100%;
+  height: 110px;
+  background: #F0F0ED;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.15s ease;
 }
 
-.privacy-hint {
+.photo-upload-container:hover {
+  background: #EAEAE6;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.upload-placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.upload-text {
+  color: #75757A;
+  font-size: 13px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 400;
+}
+
+.photo-has-preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-remove-hint {
+  position: absolute;
+  bottom: 6px;
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 10px;
   font-size: 11px;
-  color: var(--text-secondary);
-  margin-top: -2px;
-  padding-left: 2px;
+}
+
+.publish-submit-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: #141417;
+  border-radius: 18px;
+  outline: 1px solid #141417;
+  outline-offset: -1px;
+  border: none;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.publish-submit-btn:hover {
+  background: #25252b;
+}
+
+.publish-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

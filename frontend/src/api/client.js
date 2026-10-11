@@ -3,7 +3,7 @@
 // 100% Standalone - No Backend / Database Required
 // =========================================================
 
-const STORAGE_KEY = 'me_too_static_store_v2'
+const STORAGE_KEY = 'me_too_static_store_v1'
 
 const initialData = {
   user: {
@@ -11,10 +11,10 @@ const initialData = {
     username: 'lavender_nation',
     nickname: '薰衣草國度',
     bio: '把靈感變成行動，把行動留下成果',
-    weekly_info: '本週完成 5 個任務，收藏 8 則靈感'
+    weekly_info: '★ 週進度：4 個任務，已達成連續 3 天記錄'
   },
   dailyTasks: [
-    { id: 1, title: '完成專題使用流程圖', is_completed: true },
+    { id: 1, title: '完成專題使用流程圖', is_completed: false },
     { id: 2, title: '拍一張今天的天空', is_completed: false },
     { id: 3, title: '整理書桌 10 分鐘', is_completed: false }
   ],
@@ -28,8 +28,7 @@ const initialData = {
       expires_info: '任務貼文 · 剩 18 小時',
       result_count: 3,
       likes_count: 720,
-      is_joined: false,
-      is_completed: false,
+      is_joined: true,
       submissions: [
         { id: 1, author_name: 'kb_q_p', time_ago: '4小時', content: '應該長這樣', image_url: 'placeholder-sky-1' },
         { id: 2, author_name: '同學A', time_ago: '2小時', content: '今天的天空是藍灰色，很適合當背景。' },
@@ -46,32 +45,30 @@ const initialData = {
       image_url: 'placeholder-palette',
       likes_count: 86,
       saves_count: 12,
-      comments_count: 4,
       is_joined: false,
       submissions: []
     },
     {
       id: 3,
-      author_name: 'lavender_nation',
+      author_name: 'bbb',
       post_type: 'task',
       title: '拍一張今天的天空',
       content: '用一張照片記錄今天的狀態，完成後分享一句話。',
       expires_info: '任務貼文 · 剩 18 小時',
       result_count: 3,
       likes_count: 720,
-      is_joined: true,
-      is_completed: false,
+      is_joined: false,
       submissions: []
     },
     {
       id: 4,
-      author_name: 'aaa',
-      post_type: 'task',
-      title: '整理書桌10分鐘',
-      content: '去整理啦',
-      expires_info: '任務貼文 · 剩 18 小時',
-      result_count: 3,
-      likes_count: 720,
+      author_name: 'dafuu0000',
+      post_type: 'inspiration',
+      title: '把通勤路上的顏色做成色票',
+      content: '看到有趣的配色先收藏，之後可以轉成自己的創作。',
+      expires_info: '靈感貼文 · 收藏保留 30 天',
+      likes_count: 86,
+      saves_count: 12,
       is_joined: false,
       submissions: []
     }
@@ -81,7 +78,7 @@ const initialData = {
       {
         id: 101,
         title: '完成企劃草稿',
-        description: '私人任務，會保留紀錄',
+        description: '私人任務，永久留在自己的清單',
         is_completed: false,
         progress_note: ''
       }
@@ -96,7 +93,7 @@ const initialData = {
       },
       {
         id: 202,
-        post_id: 4,
+        post_id: 3,
         title: '公共任務：整理書桌 10 分鐘',
         description: '來自任務貼文，完成後需分享成果',
         is_completed: false
@@ -107,20 +104,14 @@ const initialData = {
   inspirations: [
     {
       id: 1,
-      title: '去租書店把柯南漫畫裡的壞人都圈出來。',
+      title: '去租書店把柯南漫畫裡的壞人都圈出來',
       date_group: '2026/06/24',
       is_pinned: false
     },
     {
       id: 2,
-      title: '蛇的排遺出口只有一個，尿液有可能結晶堵塞。',
+      title: '蛇的尿道跟肛門是同一個，尿液結晶有時會堵塞',
       preview_content: '貼文連結 / 照片預覽',
-      date_group: '2026/06/24',
-      is_pinned: false
-    },
-    {
-      id: 3,
-      title: '舉辦社區吃麻糬大賽解決人口老化問題。',
       date_group: '2026/06/24',
       is_pinned: false
     }
@@ -129,12 +120,10 @@ const initialData = {
     user: {
       username: 'lavender_nation',
       bio: '把靈感變成行動，把行動留下成果',
-      weekly_info: '本週完成 5 個任務，收藏 8 則靈感'
+      weekly_info: '★ 週進度：4 個任務，已達成連續 3 天記錄'
     },
     stats: {
-      friends: 28,
       outcomes: 12,
-      albums: 4,
       tasks: 28,
       inspirations: 46,
       launches: 4
@@ -376,16 +365,6 @@ export async function createInspiration(payload) {
   store.profile.stats.inspirations++
   saveStore(store)
   return newItem
-}
-
-export async function updateInspiration(id, title) {
-  const store = getStore()
-  const item = (store.inspirations || []).find(i => i.id === id)
-  if (item) {
-    item.title = title
-    saveStore(store)
-  }
-  return { success: true }
 }
 
 export async function deleteInspiration(id) {

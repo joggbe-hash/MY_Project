@@ -12,7 +12,7 @@
       <div class="input-row">
         <input 
           v-model="inputTask" 
-          placeholder="輸入一件今天想完成的事情" 
+          placeholder="輸入一件今天想完成的小事" 
           class="input-control"
           @keyup.enter="handleAddTask"
         />

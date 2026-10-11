@@ -1,103 +1,246 @@
 <template>
-  <div class="app-wrapper">
-    <div class="desktop-app-container">
-      <!-- 1. Left Desktop Sidebar (電腦版左側導航列) -->
-      <Sidebar 
-        :current-tab="currentTab"
-        :current-user="currentUser"
-        @change-tab="setTab"
-        @open-create-post="setTab('create')"
-        @open-daily-task="setTab('onboarding')"
-        @logout="handleLogout"
-      />
+  <div class="app-root-wrapper">
+    <!-- Top Mode Control & Figma Screen Quick Selector Toolbar -->
+    <header class="app-mode-toolbar">
+      <div class="mode-toggle-group">
+        <button 
+          class="mode-switch-btn" 
+          :class="{ active: viewMode === 'phone' }"
+          @click="setViewMode('phone')"
+        >
+          <span>📱 手機原型 (Figma 1:1)</span>
+        </button>
+        <button 
+          class="mode-switch-btn" 
+          :class="{ active: viewMode === 'desktop' }"
+          @click="setViewMode('desktop')"
+        >
+          <span>💻 自適應桌面版</span>
+        </button>
+      </div>
 
-      <!-- 2. Center Main Flow (電腦版中間主內容流) -->
-      <main class="main-feed-flow">
-        <!-- 01. 首次詢問 (今天是否有任務？) -->
-        <DailyTaskView 
-          v-if="currentTab === 'onboarding'"
-          :tasks="dailyTasks"
-          @add-task="handleAddDailyTask"
-          @toggle-task="handleToggleDailyTask"
-          @delete-task="handleDeleteDailyTask"
-          @finish-setup="finishDailyTaskSetup"
-        />
+      <div class="screen-selector-wrap">
+        <span class="screen-select-label">快速切換 Figma 畫面：</span>
+        <select v-model="selectedFigmaScreen" class="screen-select-dropdown" @change="jumpToFigmaScreen">
+          <option value="01">Screen 01: 今日任務 (設定引導)</option>
+          <option value="02">Screen 02: 貼文區 (主動態)</option>
+          <option value="03">Screen 03: 貼文區 (成果展示串)</option>
+          <option value="04">Screen 04: 我也要發文</option>
+          <option value="05">Screen 05: 我的任務 (私人/公共)</option>
+          <option value="06">Screen 06: 靈感清單 (隨手記錄)</option>
+          <option value="07">Screen 07: 個人主頁 (mine_account)</option>
+          <option value="08">Screen 08: 今日任務 (空狀態 & 跳過)</option>
+          <option value="09">Screen 09: 任務執行 (過程記錄)</option>
+          <option value="10">Screen 10: 今日任務 (任務完成劃線)</option>
+          <option value="11">Screen 11: 個人主頁 (others_account)</option>
+          <option value="12">Screen 12: 登入帳號</option>
+          <option value="13">Screen 13: 建立帳號 (註冊)</option>
+          <option value="14">Screen 14: 忘記密碼</option>
+        </select>
+      </div>
+    </header>
 
-        <!-- 02. 貼文區 (貼文串 & 展開打卡成果) -->
-        <FeedView 
-          v-else-if="currentTab === 'feed'"
-          :posts="posts"
-          @join-post="handleJoinPost"
-          @submit-post-result="handleSubmitResult"
-          @save-inspiration="handleSaveInspirationPost"
+    <!-- =========================================================
+         MODE 1: 390px x 844px Exact Figma Phone Prototype Frame
+         ========================================================= -->
+    <div v-if="viewMode === 'phone'" class="prototype-canvas">
+      <div class="figma-phone-frame">
+        <!-- iPhone Status Bar (9:41 & 電量 100%) -->
+        <div class="phone-status-bar">
+          <span class="status-time">9:41</span>
+          <span class="status-battery">電量 100%</span>
+        </div>
+
+        <!-- Scrollable Inner View Content -->
+        <div class="phone-screen-content">
+          <!-- 01 & 08 & 10. 今日任務引導 -->
+          <DailyTaskView 
+            v-if="currentTab === 'onboarding'"
+            :tasks="dailyTasks"
+            @add-task="handleAddDailyTask"
+            @delete-task="handleDeleteDailyTask"
+            @toggle-task="handleToggleDailyTask"
+            @finish-setup="finishDailyTaskSetup"
+          />
+
+          <!-- 02 & 03 & 16. 貼文區 -->
+          <FeedView 
+            v-else-if="currentTab === 'feed'"
+            :posts="posts"
+            @join-post="handleJoinPost"
+            @submit-post-result="handleSubmitResult"
+            @execute-task="startExecuteTaskFromPost"
+            @view-user-profile="openUserProfile"
+          />
+
+          <!-- 04. 我也要發文 -->
+          <CreatePostView 
+            v-else-if="currentTab === 'create'"
+            @publish="handlePublishPost"
+          />
+
+          <!-- 05. 我的任務 -->
+          <TasksView 
+            v-else-if="currentTab === 'tasks'"
+            :private-tasks="myTasks.private"
+            :public-tasks="myTasks.public"
+            :completed-tasks="myTasks.completed"
+            @execute-task="handleStartExecuteTask"
+            @create-private-task="handleCreatePrivateTask"
+            @complete-task="handleCompleteTask"
+          />
+
+          <!-- 09. 任務執行 / 過程記錄 -->
+          <TaskExecuteView 
+            v-else-if="currentTab === 'task-execute'"
+            :task="activeExecutingTask"
+            @back="handleBackFromExecute"
+            @save-progress="handleSaveTaskProgress"
+            @complete-task="handleFinishTaskExecution"
+          />
+
+          <!-- 06. 靈感清單 -->
+          <InspirationsView 
+            v-else-if="currentTab === 'inspirations'"
+            :inspirations="filteredInspirations"
+            @add-inspiration="handleAddInspiration"
+            @delete-inspiration="handleDeleteInspiration"
+            @search="handleSearchInspirations"
+          />
+
+          <!-- 07 & 11. 個人主頁 -->
+          <ProfileView 
+            v-else-if="currentTab === 'profile'"
+            :profile="profileData"
+            :initial-is-other-user="viewingOtherUser"
+            @update-profile="handleUpdateProfile"
+          />
+
+          <!-- 12 & 13 & 14. 帳號認證 -->
+          <LoginView 
+            v-else-if="currentTab === 'auth'"
+            @login-success="handleLoginSuccess"
+          />
+        </div>
+
+        <!-- Phone Bottom Navigation (Hidden on Onboarding & Auth) -->
+        <div 
+          v-if="currentTab !== 'onboarding' && currentTab !== 'auth'" 
+          class="phone-bottom-nav-wrap"
+        >
+          <BottomNav 
+            :current-tab="currentTab"
+            @change-tab="setTab"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================
+         MODE 2: Desktop Responsive Multi-Column Layout
+         ========================================================= -->
+    <div v-else class="app-wrapper">
+      <div class="desktop-app-container">
+        <!-- Left Sidebar -->
+        <Sidebar 
+          :current-tab="currentTab"
+          :current-user="currentUser"
           @change-tab="setTab"
-          @execute-task="handleExecuteTask"
+          @open-create-post="setTab('create')"
+          @open-daily-task="setTab('onboarding')"
+          @logout="setTab('auth')"
         />
 
-        <!-- 04. 我也要發文 (發文頁面) -->
-        <CreatePostView 
-          v-else-if="currentTab === 'create'"
-          @publish="handlePublishPost"
+        <!-- Center Main Flow -->
+        <main class="main-feed-flow">
+          <!-- 01 & 08 & 10. 今日任務引導 -->
+          <DailyTaskView 
+            v-if="currentTab === 'onboarding'"
+            :tasks="dailyTasks"
+            @add-task="handleAddDailyTask"
+            @delete-task="handleDeleteDailyTask"
+            @toggle-task="handleToggleDailyTask"
+            @finish-setup="finishDailyTaskSetup"
+          />
+
+          <!-- 02 & 03 & 16. 貼文區 -->
+          <FeedView 
+            v-else-if="currentTab === 'feed'"
+            :posts="posts"
+            @join-post="handleJoinPost"
+            @submit-post-result="handleSubmitResult"
+            @execute-task="startExecuteTaskFromPost"
+            @view-user-profile="openUserProfile"
+          />
+
+          <!-- 04. 我也要發文 -->
+          <CreatePostView 
+            v-else-if="currentTab === 'create'"
+            @publish="handlePublishPost"
+          />
+
+          <!-- 05. 我的任務 -->
+          <TasksView 
+            v-else-if="currentTab === 'tasks'"
+            :private-tasks="myTasks.private"
+            :public-tasks="myTasks.public"
+            :completed-tasks="myTasks.completed"
+            @execute-task="handleStartExecuteTask"
+            @create-private-task="handleCreatePrivateTask"
+            @complete-task="handleCompleteTask"
+          />
+
+          <!-- 09. 任務執行 / 過程記錄 -->
+          <TaskExecuteView 
+            v-else-if="currentTab === 'task-execute'"
+            :task="activeExecutingTask"
+            @back="handleBackFromExecute"
+            @save-progress="handleSaveTaskProgress"
+            @complete-task="handleFinishTaskExecution"
+          />
+
+          <!-- 06. 靈感清單 -->
+          <InspirationsView 
+            v-else-if="currentTab === 'inspirations'"
+            :inspirations="filteredInspirations"
+            @add-inspiration="handleAddInspiration"
+            @delete-inspiration="handleDeleteInspiration"
+            @search="handleSearchInspirations"
+          />
+
+          <!-- 07 & 11. 個人主頁 -->
+          <ProfileView 
+            v-else-if="currentTab === 'profile'"
+            :profile="profileData"
+            :initial-is-other-user="viewingOtherUser"
+            @update-profile="handleUpdateProfile"
+          />
+
+          <!-- 12 & 13 & 14. 帳號認證 -->
+          <LoginView 
+            v-else-if="currentTab === 'auth'"
+            @login-success="handleLoginSuccess"
+          />
+        </main>
+
+        <!-- Right Panel -->
+        <RightPanel 
+          :daily-tasks="dailyTasks"
+          :posts="posts"
+          @add-daily-task="handleAddDailyTask"
+          @toggle-daily-task="handleToggleDailyTask"
+          @open-daily-task="setTab('onboarding')"
+          @change-tab="setTab"
+          @add-inspiration="handleAddInspirationText"
         />
 
-        <!-- 05. 我的任務 (私人任務 + 公共任務 + 完成紀錄) -->
-        <TasksView 
-          v-else-if="currentTab === 'tasks'"
-          :private-tasks="myTasks.private"
-          :public-tasks="myTasks.public"
-          :completed-tasks="myTasks.completed"
-          @create-private-task="handleCreatePrivateTask"
-          @complete-task="handleCompleteTask"
-          @update-progress="handleUpdateTaskProgress"
-          @execute-task="handleExecuteTask"
+        <!-- Mobile Bottom Nav when on small mobile screens in desktop mode -->
+        <BottomNav 
+          v-if="currentTab !== 'onboarding' && currentTab !== 'auth'"
+          :current-tab="currentTab"
+          @change-tab="setTab"
         />
-
-        <!-- 10. 執行記錄 (Figma Screen 10) -->
-        <TaskExecutionView 
-          v-else-if="currentTab === 'execution'"
-          :task="activeExecutionTask"
-          @back="setTab('tasks')"
-          @navigate="setTab"
-          @save-progress="handleSaveTaskProgress"
-          @finish-task="handleFinishTaskExecution"
-        />
-
-        <!-- 06. 靈感清單 (蒐集靈感、速記、日期分組) -->
-        <InspirationsView 
-          v-else-if="currentTab === 'inspirations'"
-          :inspirations="filteredInspirations"
-          @add-inspiration="handleAddInspiration"
-          @delete-inspiration="handleDeleteInspiration"
-          @update-inspiration="handleUpdateInspiration"
-          @push-to-private-task="handlePushInspirationToPrivateTask"
-          @search="handleSearchInspirations"
-        />
-
-        <!-- 07. 個人 (九宮格作品、個人資訊與統計) -->
-        <ProfileView 
-          v-else-if="currentTab === 'profile'"
-          :profile="profileData"
-          @update-profile="handleUpdateProfile"
-          @logout="handleLogout"
-        />
-      </main>
-
-      <!-- 3. Right Desktop Panel (電腦版右側工具面板) -->
-      <RightPanel 
-        :daily-tasks="dailyTasks"
-        :posts="posts"
-        @add-daily-task="handleAddDailyTask"
-        @toggle-daily-task="handleToggleDailyTask"
-        @open-daily-task="setTab('onboarding')"
-        @change-tab="setTab"
-        @add-inspiration="handleAddInspirationText"
-      />
-
-      <!-- 4. Mobile Bottom Navigation (手機尺寸時自動浮現) -->
-      <BottomNav 
-        :current-tab="currentTab"
-        @change-tab="setTab"
-      />
+      </div>
     </div>
   </div>
 </template>
@@ -111,26 +254,39 @@ import DailyTaskView from './components/DailyTaskView.vue'
 import FeedView from './components/FeedView.vue'
 import CreatePostView from './components/CreatePostView.vue'
 import TasksView from './components/TasksView.vue'
-import TaskExecutionView from './components/TaskExecutionView.vue'
+import TaskExecuteView from './components/TaskExecuteView.vue'
 import InspirationsView from './components/InspirationsView.vue'
 import ProfileView from './components/ProfileView.vue'
+import LoginView from './components/LoginView.vue'
 import * as api from './api/client.js'
 
-// Active Tab ('feed' | 'onboarding' | 'create' | 'tasks' | 'inspirations' | 'profile')
-const currentTab = ref('feed')
+// View Modes: 'phone' (390px Figma 1:1) | 'desktop' (Responsive Web)
+const viewMode = ref('phone')
+const selectedFigmaScreen = ref('02')
 
-// Current User State (default lavender_nation from Figma)
+// Active Tab ('feed' | 'onboarding' | 'create' | 'tasks' | 'task-execute' | 'inspirations' | 'profile' | 'auth')
+const currentTab = ref('feed')
+const viewingOtherUser = ref(false)
+
+// Active task being executed
+const activeExecutingTask = ref({
+  id: 201,
+  title: '拍一張今天的天空',
+  description: '用照片或文字逐步記錄執行過程，完成後發布成果。'
+})
+
+// Current User State
 const currentUser = ref({
   id: 1,
-  username: 'lavender_nation',
-  nickname: '薰衣草國度',
+  username: 'mine_account',
+  nickname: '我的帳號',
   bio: '把靈感變成行動，把行動留下成果',
   weekly_info: '本週完成 5 個任務，收藏 8 則靈感'
 })
 
 // Data states
 const dailyTasks = ref([
-  { id: 1, title: '完成專題使用流程圖', is_completed: true },
+  { id: 1, title: '完成專題使用流程圖', is_completed: false },
   { id: 2, title: '拍一張今天的天空', is_completed: false },
   { id: 3, title: '整理書桌 10 分鐘', is_completed: false }
 ])
@@ -145,10 +301,10 @@ const posts = ref([
     expires_info: '任務貼文 · 剩 18 小時',
     result_count: 3,
     likes_count: 720,
-    is_joined: false,
+    is_joined: true,
     is_completed: false,
     submissions: [
-      { id: 1, author_name: 'kb_q_p', time_ago: '4小時', content: '應該長這樣', image_url: 'placeholder-sky-1' },
+      { id: 1, author_name: 'kb_q_p', time_ago: '4小時', content: '應該長這樣', image_url: 'sky-1' },
       { id: 2, author_name: '同學A', time_ago: '2小時', content: '今天的天空是藍灰色，很適合當背景。' },
       { id: 3, author_name: '同學B', time_ago: '2小時', content: '我看倒像綠豆糕。' }
     ]
@@ -165,6 +321,7 @@ const posts = ref([
     saves_count: 12,
     comments_count: 4,
     is_joined: false,
+    is_completed: false,
     submissions: []
   },
   {
@@ -190,6 +347,7 @@ const posts = ref([
     result_count: 3,
     likes_count: 720,
     is_joined: false,
+    is_completed: false,
     submissions: []
   }
 ])
@@ -227,21 +385,18 @@ const inspirations = ref([
   {
     id: 1,
     title: '去租書店把柯南漫畫裡的壞人都圈出來。',
-    date_group: '2026/06/24',
-    is_pinned: false
+    date_group: '2026/06/24'
   },
   {
     id: 2,
     title: '蛇的排遺出口只有一個，尿液有可能結晶堵塞。',
     preview_content: '貼文連結 / 照片預覽',
-    date_group: '2026/06/24',
-    is_pinned: false
+    date_group: '2026/06/24'
   },
   {
     id: 3,
     title: '舉辦社區吃麻糬大賽解決人口老化問題。',
-    date_group: '2026/06/24',
-    is_pinned: false
+    date_group: '2026/06/24'
   }
 ])
 
@@ -254,17 +409,14 @@ const filteredInspirations = computed(() => {
 
 const profileData = ref({
   user: {
-    username: 'lavender_nation',
+    username: 'mine_account',
     bio: '把靈感變成行動，把行動留下成果',
     weekly_info: '本週完成 5 個任務，收藏 8 則靈感'
   },
   stats: {
-    friends: 28,
     outcomes: 12,
-    albums: 4,
-    tasks: 28,
-    inspirations: 46,
-    launches: 4
+    followers: 28,
+    albums: 4
   }
 })
 
@@ -285,11 +437,10 @@ async function loadDataFromBackend() {
 
   const ins = await api.fetchInspirations()
   if (ins && ins.length) inspirations.value = ins
+}
 
-  const prof = await api.fetchProfile()
-  if (prof) {
-    profileData.value = prof
-  }
+function setViewMode(mode) {
+  viewMode.value = mode
 }
 
 function setTab(tab) {
@@ -297,12 +448,79 @@ function setTab(tab) {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// 01 Onboarding Handler: 點擊「完成，進入主頁」或「跳過，進入主頁」
+// Jump directly to any of the 14 Figma screens
+function jumpToFigmaScreen() {
+  const s = selectedFigmaScreen.value
+  viewMode.value = 'phone'
+
+  switch (s) {
+    case '01':
+      currentTab.value = 'onboarding'
+      dailyTasks.value = [
+        { id: 1, title: '完成專題使用流程圖', is_completed: false },
+        { id: 2, title: '拍一張今天的天空', is_completed: false },
+        { id: 3, title: '整理書桌 10 分鐘', is_completed: false }
+      ]
+      break
+    case '02':
+      currentTab.value = 'feed'
+      posts.value[0].is_completed = false
+      posts.value[0].is_joined = false
+      break
+    case '03':
+      currentTab.value = 'feed'
+      posts.value[0].is_completed = true
+      break
+    case '04':
+      currentTab.value = 'create'
+      break
+    case '05':
+      currentTab.value = 'tasks'
+      break
+    case '06':
+      currentTab.value = 'inspirations'
+      break
+    case '07':
+      currentTab.value = 'profile'
+      viewingOtherUser.value = false
+      break
+    case '08':
+      currentTab.value = 'onboarding'
+      dailyTasks.value = []
+      break
+    case '09':
+      activeExecutingTask.value = {
+        id: 201,
+        title: '拍一張今天的天空',
+        description: '用照片或文字逐步記錄執行過程，完成後發布成果。'
+      }
+      currentTab.value = 'task-execute'
+      break
+    case '10':
+      currentTab.value = 'onboarding'
+      dailyTasks.value = [
+        { id: 1, title: '拍一張今天的天空', is_completed: false },
+        { id: 2, title: '整理書桌 10 分鐘', is_completed: false },
+        { id: 3, title: '完成專題使用流程圖', is_completed: true }
+      ]
+      break
+    case '11':
+      currentTab.value = 'profile'
+      viewingOtherUser.value = true
+      break
+    case '12':
+    case '13':
+    case '14':
+      currentTab.value = 'auth'
+      break
+  }
+}
+
 function finishDailyTaskSetup() {
   setTab('feed')
 }
 
-// Handler actions
+// Daily Task actions
 async function handleAddDailyTask(title) {
   const task = await api.createDailyTask(title)
   dailyTasks.value.push(task || { id: Date.now(), title, is_completed: false })
@@ -321,12 +539,11 @@ async function handleToggleDailyTask(id) {
   }
 }
 
-// 02 Feed Action: 點擊「我也要」
+// Feed Actions
 async function handleJoinPost(post) {
   post.is_joined = true
   await api.joinPost(post.id)
 
-  // 加入我的任務 -> 公共任務
   const exists = myTasks.value.public.some(t => t.post_id === post.id)
   if (!exists) {
     myTasks.value.public.unshift({
@@ -339,10 +556,27 @@ async function handleJoinPost(post) {
   }
 }
 
-// 02 Feed Action: 提交成果打卡
+function startExecuteTaskFromPost(post) {
+  activeExecutingTask.value = {
+    id: post.id,
+    title: post.title,
+    description: post.content || '用照片或文字逐步記錄執行過程，完成後發布成果。'
+  }
+  setTab('task-execute')
+}
+
+function openUserProfile(username) {
+  if (username === 'mine_account' || username === currentUser.value.username) {
+    viewingOtherUser.value = false
+  } else {
+    viewingOtherUser.value = true
+  }
+  setTab('profile')
+}
+
 async function handleSubmitResult({ postId, content }) {
   const post = posts.value.find(p => p.id === postId)
-  const authorName = currentUser.value?.username || profileData.value.user?.username || 'lavender_nation'
+  const authorName = currentUser.value?.username || 'mine_account'
   if (post) {
     if (!post.submissions) post.submissions = []
     post.submissions.push({
@@ -356,38 +590,12 @@ async function handleSubmitResult({ postId, content }) {
 
   await api.addSubmission(postId, { content })
   profileData.value.stats.outcomes++
-
-  // 同步完成公共任務
-  const taskIndex = myTasks.value.public.findIndex(t => t.post_id === postId)
-  if (taskIndex !== -1) {
-    const task = myTasks.value.public.splice(taskIndex, 1)[0]
-    task.is_completed = true
-    myTasks.value.completed.unshift(task)
-    await api.completeMyTask(task.id)
-  }
 }
 
-// 04 發文 Action: 發布貼文 (RUICHIEN 設計註釋: 提供公開/私人選項)
+// Create Post Action
 async function handlePublishPost(payload) {
-  const authorName = currentUser.value?.username || profileData.value.user?.username || 'lavender_nation'
+  const authorName = currentUser.value?.username || 'mine_account'
   const isTask = payload.post_type === 'task'
-  const isPrivate = payload.visibility === 'private'
-
-  if (isPrivate) {
-    if (isTask) {
-      await handleCreatePrivateTask(payload.title)
-      setTab('tasks')
-    } else {
-      await handleAddInspiration({
-        title: payload.title,
-        preview_content: payload.content,
-        image_url: payload.image_url
-      })
-      setTab('inspirations')
-    }
-    return
-  }
-
   const newPost = await api.createPost(payload)
   const createdPost = newPost || {
     id: Date.now(),
@@ -397,12 +605,12 @@ async function handlePublishPost(payload) {
     likes_count: 0,
     result_count: 0,
     is_joined: isTask,
+    is_completed: false,
     submissions: []
   }
 
   if (isTask) {
     createdPost.is_joined = true
-    // 發起人自動加入任務列表
     const exists = myTasks.value.public.some(t => t.post_id === createdPost.id)
     if (!exists) {
       myTasks.value.public.unshift({
@@ -417,28 +625,30 @@ async function handlePublishPost(payload) {
 
   posts.value.unshift(createdPost)
   setTab('feed')
-  profileData.value.stats.launches++
 }
 
-// 05 任務 Action: 新增私人任務
+// Tasks Actions
+function handleStartExecuteTask(task) {
+  activeExecutingTask.value = task
+  setTab('task-execute')
+}
+
 async function handleCreatePrivateTask(title) {
   const res = await api.createMyTask({
     title,
-    description: '私人任務，永久留在自己的清單',
+    description: '私人任務，會保留紀錄',
     task_type: 'private'
   })
   const newTask = res || {
     id: Date.now(),
     title,
-    description: '私人任務，永久留在自己的清單',
+    description: '私人任務，會保留紀錄',
     is_completed: false
   }
   myTasks.value.private.unshift(newTask)
 }
 
-// 05 任務 Action: 完成任務
 async function handleCompleteTask(id) {
-  // 檢查私人任務
   let taskIndex = myTasks.value.private.findIndex(t => t.id === id)
   if (taskIndex !== -1) {
     const task = myTasks.value.private.splice(taskIndex, 1)[0]
@@ -449,7 +659,6 @@ async function handleCompleteTask(id) {
     return
   }
 
-  // 檢查公共任務
   taskIndex = myTasks.value.public.findIndex(t => t.id === id)
   if (taskIndex !== -1) {
     const task = myTasks.value.public.splice(taskIndex, 1)[0]
@@ -458,106 +667,57 @@ async function handleCompleteTask(id) {
     profileData.value.stats.outcomes++
     await api.completeMyTask(id)
 
-    // 若對應貼文存在，同步留下完成打卡記錄
     if (task.post_id) {
       const post = posts.value.find(p => p.id === task.post_id)
       if (post) {
-        if (!post.submissions) post.submissions = []
-        const authorName = currentUser.value?.username || profileData.value.user?.username || 'lavender_nation'
-        post.submissions.push({
-          id: Date.now(),
-          author_name: authorName,
-          time_ago: '剛剛',
-          content: '完成打卡！'
-        })
-        post.result_count = (post.result_count || 0) + 1
-        await api.addSubmission(task.post_id, { content: '完成打卡！' })
+        post.is_completed = true
       }
     }
   }
 }
 
-// 10 執行記錄 Action (Figma Screen 10)
-const activeExecutionTask = ref({
-  id: 1,
-  title: '拍一張今天的天空',
-  description: '用照片或文字逐步記錄執行過程，完成後發布成果。'
-})
-
-function handleExecuteTask(task) {
-  activeExecutionTask.value = task || {
-    id: 1,
-    title: '拍一張今天的天空',
-    description: '用照片或文字逐步記錄執行過程，完成後發布成果。'
-  }
-  setTab('execution')
+// Task Execute actions
+function handleBackFromExecute() {
+  setTab('tasks')
 }
 
-async function handleSaveTaskProgress({ taskId, steps, note }) {
-  const pTask = myTasks.value.private.find(t => t.id === taskId)
-  if (pTask) pTask.progress_note = note
-  const pubTask = myTasks.value.public.find(t => t.id === taskId || t.post_id === taskId)
-  if (pubTask) pubTask.progress_note = note
-  await api.updateTaskProgress(taskId, note)
+function handleSaveTaskProgress(payload) {
+  // Save progress notes or steps
 }
 
-async function handleFinishTaskExecution({ taskId, taskTitle, steps, submissionContent }) {
-  await handleCompleteTask(taskId)
-  const linkedPost = posts.value.find(p => p.id === taskId || p.title === taskTitle || (taskTitle && taskTitle.includes(p.title)))
-  if (linkedPost) {
-    await handleSubmitResult({
-      postId: linkedPost.id,
-      content: submissionContent || '完成任務成果打卡！'
+function handleFinishTaskExecution({ taskId, taskTitle, steps }) {
+  // Mark task completed
+  handleCompleteTask(taskId)
+
+  // Find corresponding post and mark as completed
+  const post = posts.value.find(p => p.id === taskId || p.title === taskTitle || p.title === activeExecutingTask.value?.title)
+  if (post) {
+    post.is_completed = true
+    const authorName = currentUser.value?.username || 'mine_account'
+    const lastStep = steps && steps.length > 0 ? steps[steps.length - 1] : null
+    post.submissions.unshift({
+      id: Date.now(),
+      author_name: authorName,
+      time_ago: '剛剛',
+      content: lastStep?.text || '完成打卡！',
+      image_url: lastStep?.imageUrl || 'uploaded-photo-preview'
     })
   }
+
+  // Navigate to feed with completed state
+  setTab('feed')
 }
 
-function handleUpdateTaskProgress({ id, note }) {
-  const task = myTasks.value.private.find(t => t.id === id)
-  if (task) task.progress_note = note
-  api.updateTaskProgress(id, note)
-}
-
-// 02 貼文 Action: 收藏靈感貼文 (RUICHIEN 設計註釋: 按鈕"收藏靈感")
-async function handleSaveInspirationPost(post) {
-  const todayStr = '2026/06/24'
-  const newIns = {
-    id: Date.now(),
-    title: post.title,
-    preview_content: post.content || '貼文連結 / 照片預覽',
-    image_url: post.image_url || '',
-    date_group: todayStr,
-    is_pinned: false
-  }
-  inspirations.value.unshift(newIns)
-  profileData.value.stats.inspirations++
-  await api.createInspiration(newIns)
-}
-
-// 06 靈感 Action
+// Inspiration Actions
 async function handleAddInspiration(payload) {
   const todayStr = '2026/06/24'
   const item = await api.createInspiration(payload)
   inspirations.value.unshift(item || { id: Date.now(), date_group: todayStr, ...payload })
-  profileData.value.stats.inspirations++
+  profileData.value.stats.outcomes++
 }
 
 function handleAddInspirationText(text) {
   handleAddInspiration({ title: text })
-}
-
-// RUICHIEN 設計註釋: 推至私人任務區
-async function handlePushInspirationToPrivateTask(item) {
-  await handleCreatePrivateTask(item.title)
-}
-
-// RUICHIEN 設計註釋: 點擊直接編輯
-async function handleUpdateInspiration({ id, title }) {
-  const item = inspirations.value.find(i => i.id === id)
-  if (item) {
-    item.title = title
-    await api.updateInspiration(id, title)
-  }
 }
 
 async function handleDeleteInspiration(id) {
@@ -569,7 +729,7 @@ function handleSearchInspirations(q) {
   inspirationSearch.value = q
 }
 
-// 07 個人 Action
+// Profile Actions
 async function handleUpdateProfile(data) {
   if (profileData.value.user) {
     profileData.value.user.bio = data.bio
@@ -578,7 +738,20 @@ async function handleUpdateProfile(data) {
   await api.updateProfile(data)
 }
 
-function handleLogout() {
-  currentTab.value = 'feed'
+function handleLoginSuccess(user) {
+  currentUser.value.username = user.username
+  if (profileData.value.user) {
+    profileData.value.user.username = user.username
+  }
+  setTab('feed')
 }
 </script>
+
+<style scoped>
+.app-root-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+</style>
